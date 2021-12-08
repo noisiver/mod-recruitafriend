@@ -7,9 +7,7 @@ This module will add two in-game commands.
 **.recruit help** will give some basic information on how to use the feature.
 **.recruit friend <name>** will add the users account id as a recruiter of the targetted characters account.
 
-All the features are enabled, or disabled, through the configuration - allowing a user to only use the features they want.
-
-There are config options to allow recruiting the same account again after it has expired and to make the recruitment never expire.
+There's a configuration option to determine how long a referral lasts. Setting that value to 0 means it'll never expire.
 
 # Additional information
 This module is part of my collection of modules.
