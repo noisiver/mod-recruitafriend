@@ -5,6 +5,16 @@
 
 using namespace Acore::ChatCommands;
 
+struct Recruited
+{
+    uint32 accountId;
+    uint32 recruiterId;
+    time_t timestamp;
+    uint8 active;
+};
+
+std::vector<Recruited> recruited;
+
 class RecruitAFriendAnnounce : public PlayerScript
 {
     public:
@@ -13,7 +23,7 @@ class RecruitAFriendAnnounce : public PlayerScript
         void OnLogin(Player* player) override
         {
             ChatHandler(player->GetSession()).PSendSysMessage("This server allows the use of the refer a friend feature.");
-            ChatHandler(player->GetSession()).PSendSysMessage("Use the command |cff4CFF00.recruit help |rto get started.");
+            ChatHandler(player->GetSession()).PSendSysMessage("Use the command |cff4CFF00.recruit help|r to get started.");
         }
 };
 
@@ -28,6 +38,7 @@ class RecruitAFriendCommand : public CommandScript
             {
                 { "friend", HandleRecruitFriendCommand, SEC_PLAYER, Console::No },
                 { "help", HandleRecruitHelpCommand, SEC_PLAYER, Console::No },
+                { "renew", HandleRecruitRenewCommand, SEC_PLAYER, Console::No },
             };
 
             static ChatCommandTable commandTable =
@@ -36,28 +47,6 @@ class RecruitAFriendCommand : public CommandScript
             };
 
             return commandTable;
-        }
-
-        static bool HandleRecruitHelpCommand(ChatHandler* handler)
-        {
-            uint32 duration = sConfigMgr->GetIntDefault("RecruitAFriend.Duration", 90);
-
-            ChatHandler(handler->GetSession()).SendSysMessage("You can recruit a friend using |cff4CFF00.recruit friend <name> |r.");
-            ChatHandler(handler->GetSession()).PSendSysMessage("You will both receive a bonus to experience and reputation up to level %i.", sWorld->getIntConfig(CONFIG_MAX_RECRUIT_A_FRIEND_BONUS_PLAYER_LEVEL));
-
-            if (duration > 0)
-            {
-                ChatHandler(handler->GetSession()).PSendSysMessage("The recruit a friend benefits will expire after %i days.", duration);
-
-                if (sConfigMgr->GetBoolDefault("RecruitAFriend.Reusable", 0))
-                    ChatHandler(handler->GetSession()).SendSysMessage("You can recruit the account again after it has expired.");
-            }
-            else
-            {
-                ChatHandler(handler->GetSession()).SendSysMessage("The recruit a friend benefits will never expire.");
-            }
-
-            return true;
         }
 
         static bool HandleRecruitFriendCommand(ChatHandler* handler, Optional<PlayerIdentifier> target)
@@ -74,31 +63,120 @@ class RecruitAFriendCommand : public CommandScript
 
             if (referrerAccountId == referralAccountId)
             {
-                ChatHandler(handler->GetSession()).SendSysMessage("|cffFF0000You can't recruit yourself! |r");
+                ChatHandler(handler->GetSession()).SendSysMessage("You can't recruit |cffFF0000yourself|r!");
                 return true;
             }
 
-            QueryResult result = LoginDatabase.PQuery("SELECT `active` FROM `mod_recruitafriend` WHERE `account_id` = %i AND `recruiter` = %i", referralAccountId, referrerAccountId);
+            LoadRecruited();
 
-            if (result)
+            if (IsReferralActive(referralAccountId))
             {
-                if ((*result)[0].GetInt32() == 1)
-                {
-                    ChatHandler(handler->GetSession()).SendSysMessage("A referral of that account is currently |cff4CFF00active |r.");
-                    return true;
-                }
-                else
-                {
-                    if (!sConfigMgr->GetBoolDefault("RecruitAFriend.Reusable", 0))
-                    {
-                        ChatHandler(handler->GetSession()).SendSysMessage("|cffFF0000A referral of that account has |cffFF0000expired |r.");
-                        return true;
-                    }
-                }
+                ChatHandler(handler->GetSession()).SendSysMessage("A referral of that account is currently |cff4CFF00active|r.");
+                return true;
+            }
+
+            if (!IsReferralValid(referralAccountId))
+            {
+                ChatHandler(handler->GetSession()).SendSysMessage("|cffFF0000A referral of that account has |cffFF0000expired|r.");
+                return true;
+            }
+
+            LoginDatabase.DirectPExecute("UPDATE `account` SET `recruiter` = %i WHERE `id` = %i", referrerAccountId, referralAccountId);
+            LoginDatabase.DirectPExecute("INSERT INTO `mod_recruitafriend` (`account_id`, `recruiter`) VALUES (%i, %i)", referralAccountId, referrerAccountId);
+            ChatHandler(handler->GetSession()).PSendSysMessage("You have successfully referred |cff4CFF00%s|r.", target->GetConnectedPlayer()->GetName());
+            ChatHandler(handler->GetSession()).SendSysMessage("You both need to log out and back in for the changes to take effect.");
+
+            return true;
+        }
+
+        static bool HandleRecruitHelpCommand(ChatHandler* handler)
+        {
+            int duration = sConfigMgr->GetIntDefault("RecruitAFriend.Duration", 90);
+            bool renewable = sConfigMgr->GetBoolDefault("RecruitAFriend.Renewable", 0);
+
+            ChatHandler(handler->GetSession()).SendSysMessage("You can recruit a friend using |cff4CFF00.recruit friend <name>|r.");
+            ChatHandler(handler->GetSession()).PSendSysMessage("You will both receive a bonus to experience and reputation up to level %i.", sWorld->getIntConfig(CONFIG_MAX_RECRUIT_A_FRIEND_BONUS_PLAYER_LEVEL));
+
+            if (duration > 0)
+            {
+                ChatHandler(handler->GetSession()).PSendSysMessage("The recruit a friend benefits will expire after %i days.", duration);
+
+                if (renewable)
+                    ChatHandler(handler->GetSession()).SendSysMessage("You can renew the referral after it has expired using |cff4CFF00.recruit renew <name>|r.");
+            }
+            else
+            {
+                ChatHandler(handler->GetSession()).SendSysMessage("The recruit a friend benefits will never expire.");
             }
 
             return true;
         }
+
+        static bool HandleRecruitRenewCommand(ChatHandler* handler)
+        {
+            bool renewable = sConfigMgr->GetBoolDefault("RecruitAFriend.Renewable", 0);
+            return true;
+        }
+
+        private:
+            static void LoadRecruited()
+            {
+                recruited.clear();
+
+                QueryResult result = LoginDatabase.Query("SELECT `account_id`, `recruiter`, `referred_date`, `active` FROM `mod_recruitafriend` ORDER BY `account_id` ASC");
+
+                if (!result)
+                    return;
+
+                int i = 0;
+
+                do
+                {
+                    Field* fields = result->Fetch();
+
+                    recruited.push_back(Recruited());
+                    recruited[i].accountId = fields[0].GetUInt32();
+                    recruited[i].recruiterId = fields[1].GetUInt32();
+                    recruited[i].timestamp = fields[2].GetUInt32();
+                    recruited[i].active = fields[3].GetUInt8();
+
+                    i++;
+                } while (result->NextRow());
+            }
+
+            static bool IsReferralValid(uint32 accountId)
+            {
+                for (int i = 0; i < recruited.size(); i++)
+                {
+                    if (recruited[i].accountId == accountId)
+                        return false;
+                }
+
+                return true;
+            }
+
+            static bool IsReferralActive(uint32 accountId)
+            {
+                for (int i = 0; i < recruited.size(); i++)
+                {
+                    if (recruited[i].accountId == accountId)
+                        if (recruited[i].active == 1)
+                            return true;
+                }
+
+                return false;
+            }
+
+            static int WhoReferred(uint32 accountId)
+            {
+                for (int i = 0; i < recruited.size(); i++)
+                {
+                    if (recruited[i].accountId == accountId)
+                        return recruited[i].recruiterId;
+                }
+
+                return 0;
+            }
 };
 
 void AddRecruitAFriendScripts()
