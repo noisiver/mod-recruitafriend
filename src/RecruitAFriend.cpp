@@ -52,7 +52,7 @@ class RecruitAFriendCommand : public CommandScript
 
         static bool HandleRecruitFriendCommand(ChatHandler* handler, Optional<PlayerIdentifier> target)
         {
-            if (!target || !target->IsConnected())
+            if (!target || !target->IsConnected() || target->GetConnectedPlayer()->IsGameMaster())
             {
                 handler->SendSysMessage(LANG_PLAYER_NOT_FOUND);
                 handler->SetSentErrorMessage(true);
