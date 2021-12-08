@@ -1,0 +1,11 @@
+[worldserver]
+###########################################################################
+# Recruit A Friend
+###########################################################################
+# The amount of days that recruit a friend will stay active
+# A value of 0 will cause it to never expire
+RecruitAFriend.Duration = 90
+
+# Allow recruiting the same account after the link has expired
+RecruitAFriend.Reusable = 0
+###########################################################################
