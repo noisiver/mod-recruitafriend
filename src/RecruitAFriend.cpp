@@ -59,16 +59,16 @@ class RecruitAFriendCommand : public CommandScript
                 return false;
             }
 
-            uint32 referrerAccountId = handler->GetSession()->GetAccountId();
+            uint32 recruiterAccountId = handler->GetSession()->GetAccountId();
             uint32 referralAccountId = target->GetConnectedPlayer()->GetSession()->GetAccountId();
 
-            if (referrerAccountId == referralAccountId)
+            if (recruiterAccountId == referralAccountId)
             {
                 ChatHandler(handler->GetSession()).SendSysMessage("You can't recruit |cffFF0000yourself|r!");
                 return true;
             }
 
-            LoadRecruited();
+            LoadRecruitedAccounts();
 
             if (IsReferralActive(referralAccountId))
             {
@@ -82,9 +82,18 @@ class RecruitAFriendCommand : public CommandScript
                 return true;
             }
 
-            LoginDatabase.DirectPExecute("UPDATE `account` SET `recruiter` = %i WHERE `id` = %i", referrerAccountId, referralAccountId);
-            LoginDatabase.DirectPExecute("INSERT INTO `mod_recruitafriend` (`account_id`, `recruiter`) VALUES (%i, %i)", referralAccountId, referrerAccountId);
-            ChatHandler(handler->GetSession()).PSendSysMessage("You have successfully referred |cff4CFF00%s|r.", target->GetConnectedPlayer()->GetName());
+            if (!IsReferralValid(recruiterAccountId))
+            {
+                if (WhoRecruited(recruiterAccountId) == referralAccountId)
+                {
+                    ChatHandler(handler->GetSession()).PSendSysMessage("You can't recruit |cff4CFF00%s|r because they recruited you.", target->GetConnectedPlayer()->GetName());
+                    return true;
+                }
+            }
+
+            LoginDatabase.DirectPExecute("UPDATE `account` SET `recruiter` = %i WHERE `id` = %i", recruiterAccountId, referralAccountId);
+            LoginDatabase.DirectPExecute("INSERT INTO `mod_recruitafriend` (`id`, `recruiter`) VALUES (%i, %i)", referralAccountId, recruiterAccountId);
+            ChatHandler(handler->GetSession()).PSendSysMessage("You have successfully recruited |cff4CFF00%s|r.", target->GetConnectedPlayer()->GetName());
             ChatHandler(handler->GetSession()).SendSysMessage("You both need to log out and back in for the changes to take effect.");
 
             return true;
@@ -108,11 +117,11 @@ class RecruitAFriendCommand : public CommandScript
         }
 
         private:
-            static void LoadRecruited()
+            static void LoadRecruitedAccounts()
             {
                 recruited.clear();
 
-                QueryResult result = LoginDatabase.Query("SELECT `account_id`, `recruiter`, `referred_date`, `active` FROM `mod_recruitafriend` ORDER BY `account_id` ASC");
+                QueryResult result = LoginDatabase.Query("SELECT `id`, `recruiter`, `referral_date`, `active` FROM `mod_recruitafriend` ORDER BY `id` ASC");
 
                 if (!result)
                     return;
@@ -154,6 +163,17 @@ class RecruitAFriendCommand : public CommandScript
                 }
 
                 return false;
+            }
+
+            static int WhoRecruited(uint32 accountId)
+            {
+                for (int i = 0; i < recruited.size(); i++)
+                {
+                    if (recruited[i].accountId == accountId)
+                        return recruited[i].recruiterId;
+                }
+
+                return 0;
             }
 };
 
