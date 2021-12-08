@@ -158,17 +158,6 @@ class RecruitAFriendCommand : public CommandScript
 
                 return false;
             }
-
-            static int WhoReferred(uint32 accountId)
-            {
-                for (int i = 0; i < recruited.size(); i++)
-                {
-                    if (recruited[i].accountId == accountId)
-                        return recruited[i].recruiterId;
-                }
-
-                return 0;
-            }
 };
 
 class RecruitAFriendExpire : public WorldScript
@@ -193,7 +182,7 @@ class RecruitAFriendExpire : public WorldScript
 
                 if (currentTime > timeDelay)
                 {
-                    DeactivateExpiredReferrals();
+                    CheckExpiredReferrals();
                     currentTime = 0;
                 }
             }
@@ -203,7 +192,7 @@ class RecruitAFriendExpire : public WorldScript
             uint32 currentTime;
             uint32 timeDelay;
 
-            void DeactivateExpiredReferrals()
+            void CheckExpiredReferrals()
             {
                 LoginDatabase.DirectPExecute("UPDATE `account` SET `recruiter` = 0 WHERE `id` IN (SELECT `id` FROM `mod_recruitafriend` WHERE `referral_date` < NOW() - INTERVAL %i DAY AND active = 1)", duration);
                 LoginDatabase.DirectPExecute("UPDATE `mod_recruitafriend` SET `active` = 0 WHERE `referral_date` < NOW() - INTERVAL %i DAY AND `active` = 1", duration);
