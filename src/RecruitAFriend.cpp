@@ -32,10 +32,7 @@ class RecruitAFriendAnnounce : public PlayerScript
 class RecruitAFriendCommand : public CommandScript
 {
     public:
-        RecruitAFriendCommand() : CommandScript("RecruitAFriendCommand")
-        {
-            duration = sConfigMgr->GetIntDefault("RecruitAFriend.Duration", 90);
-        }
+        RecruitAFriendCommand() : CommandScript("RecruitAFriendCommand") {}
 
         ChatCommandTable GetCommands() const override
         {
