@@ -82,7 +82,7 @@ class RecruitAFriendCommand : public CommandScript
             }
 
             LoginDatabase.DirectPExecute("UPDATE `account` SET `recruiter` = %i WHERE `id` = %i", referrerAccountId, referralAccountId);
-            LoginDatabase.DirectPExecute("INSERT INTO `mod_recruitafriend` (`account_id`, `recruiter`) VALUES (%i, %i)", referralAccountId, referrerAccountId);
+            LoginDatabase.DirectPExecute("INSERT INTO `mod_recruitafriend` (`id`, `recruiter`) VALUES (%i, %i)", referralAccountId, referrerAccountId);
             ChatHandler(handler->GetSession()).PSendSysMessage("You have successfully referred |cff4CFF00%s|r.", target->GetConnectedPlayer()->GetName());
             ChatHandler(handler->GetSession()).SendSysMessage("You both need to log out and back in for the changes to take effect.");
 
@@ -123,7 +123,7 @@ class RecruitAFriendCommand : public CommandScript
             {
                 recruited.clear();
 
-                QueryResult result = LoginDatabase.Query("SELECT `account_id`, `recruiter`, `referred_date`, `active` FROM `mod_recruitafriend` ORDER BY `account_id` ASC");
+                QueryResult result = LoginDatabase.Query("SELECT `id`, `recruiter`, `referral_date`, `active` FROM `mod_recruitafriend` ORDER BY `id` ASC");
 
                 if (!result)
                     return;
