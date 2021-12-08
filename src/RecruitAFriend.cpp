@@ -15,6 +15,8 @@ struct Recruited
 
 std::vector<Recruited> recruited;
 
+uint32 duration;
+
 class RecruitAFriendAnnounce : public PlayerScript
 {
     public:
@@ -30,7 +32,10 @@ class RecruitAFriendAnnounce : public PlayerScript
 class RecruitAFriendCommand : public CommandScript
 {
     public:
-        RecruitAFriendCommand() : CommandScript("RecruitAFriendCommand") {}
+        RecruitAFriendCommand() : CommandScript("RecruitAFriendCommand")
+        {
+            duration = sConfigMgr->GetIntDefault("RecruitAFriend.Duration", 90);
+        }
 
         ChatCommandTable GetCommands() const override
         {
@@ -38,7 +43,6 @@ class RecruitAFriendCommand : public CommandScript
             {
                 { "friend", HandleRecruitFriendCommand, SEC_PLAYER, Console::No },
                 { "help", HandleRecruitHelpCommand, SEC_PLAYER, Console::No },
-                { "renew", HandleRecruitRenewCommand, SEC_PLAYER, Console::No },
             };
 
             static ChatCommandTable commandTable =
@@ -82,7 +86,7 @@ class RecruitAFriendCommand : public CommandScript
             }
 
             LoginDatabase.DirectPExecute("UPDATE `account` SET `recruiter` = %i WHERE `id` = %i", referrerAccountId, referralAccountId);
-            LoginDatabase.DirectPExecute("INSERT INTO `mod_recruitafriend` (`id`, `recruiter`) VALUES (%i, %i)", referralAccountId, referrerAccountId);
+            LoginDatabase.DirectPExecute("INSERT INTO `mod_recruitafriend` (`account_id`, `recruiter`) VALUES (%i, %i)", referralAccountId, referrerAccountId);
             ChatHandler(handler->GetSession()).PSendSysMessage("You have successfully referred |cff4CFF00%s|r.", target->GetConnectedPlayer()->GetName());
             ChatHandler(handler->GetSession()).SendSysMessage("You both need to log out and back in for the changes to take effect.");
 
@@ -91,18 +95,12 @@ class RecruitAFriendCommand : public CommandScript
 
         static bool HandleRecruitHelpCommand(ChatHandler* handler)
         {
-            int duration = sConfigMgr->GetIntDefault("RecruitAFriend.Duration", 90);
-            bool renewable = sConfigMgr->GetBoolDefault("RecruitAFriend.Renewable", 0);
-
             ChatHandler(handler->GetSession()).SendSysMessage("You can recruit a friend using |cff4CFF00.recruit friend <name>|r.");
             ChatHandler(handler->GetSession()).PSendSysMessage("You will both receive a bonus to experience and reputation up to level %i.", sWorld->getIntConfig(CONFIG_MAX_RECRUIT_A_FRIEND_BONUS_PLAYER_LEVEL));
 
             if (duration > 0)
             {
                 ChatHandler(handler->GetSession()).PSendSysMessage("The recruit a friend benefits will expire after %i days.", duration);
-
-                if (renewable)
-                    ChatHandler(handler->GetSession()).SendSysMessage("You can renew the referral after it has expired using |cff4CFF00.recruit renew <name>|r.");
             }
             else
             {
@@ -112,18 +110,12 @@ class RecruitAFriendCommand : public CommandScript
             return true;
         }
 
-        static bool HandleRecruitRenewCommand(ChatHandler* handler)
-        {
-            bool renewable = sConfigMgr->GetBoolDefault("RecruitAFriend.Renewable", 0);
-            return true;
-        }
-
         private:
             static void LoadRecruited()
             {
                 recruited.clear();
 
-                QueryResult result = LoginDatabase.Query("SELECT `id`, `recruiter`, `referral_date`, `active` FROM `mod_recruitafriend` ORDER BY `id` ASC");
+                QueryResult result = LoginDatabase.Query("SELECT `account_id`, `recruiter`, `referred_date`, `active` FROM `mod_recruitafriend` ORDER BY `account_id` ASC");
 
                 if (!result)
                     return;
@@ -179,8 +171,48 @@ class RecruitAFriendCommand : public CommandScript
             }
 };
 
+class RecruitAFriendExpire : public WorldScript
+{
+    public:
+        RecruitAFriendExpire() : WorldScript("RecruitAFriendExpire")
+        {
+            // 3600 seconds is 60 minutes
+            timeDelay = (3600 * 1000);
+        }
+
+        void OnStartup() override
+        {
+            duration = sConfigMgr->GetIntDefault("RecruitAFriend.Duration", 90);
+        }
+
+        void OnUpdate(uint32 diff) override
+        {
+            if (duration > 0)
+            {
+                currentTime += diff;
+
+                if (currentTime > timeDelay)
+                {
+                    DeactivateExpiredReferrals();
+                    currentTime = 0;
+                }
+            }
+        }
+
+        private:
+            uint32 currentTime;
+            uint32 timeDelay;
+
+            void DeactivateExpiredReferrals()
+            {
+                LoginDatabase.DirectPExecute("UPDATE `account` SET `recruiter` = 0 WHERE `id` IN (SELECT `id` FROM `mod_recruitafriend` WHERE `referral_date` < NOW() - INTERVAL %i DAY AND active = 1)", duration);
+                LoginDatabase.DirectPExecute("UPDATE `mod_recruitafriend` SET `active` = 0 WHERE `referral_date` < NOW() - INTERVAL %i DAY AND `active` = 1", duration);
+            }
+};
+
 void AddRecruitAFriendScripts()
 {
     new RecruitAFriendAnnounce();
     new RecruitAFriendCommand();
+    new RecruitAFriendExpire();
 }
