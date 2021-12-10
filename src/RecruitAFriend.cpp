@@ -60,7 +60,7 @@ class RecruitAFriendCommand : public CommandScript
             }
 
             uint32 recruiterAccountId = handler->GetSession()->GetAccountId();
-            uint32 referralAccountId = target->GetConnectedPlayer()->GetSession()->GetAccountId();
+            uint32 referralAccountId  = target->GetConnectedPlayer()->GetSession()->GetAccountId();
 
             if (recruiterAccountId == referralAccountId)
             {
@@ -133,10 +133,10 @@ class RecruitAFriendCommand : public CommandScript
                     Field* fields = result->Fetch();
 
                     recruited.push_back(Recruited());
-                    recruited[i].accountId = fields[0].GetUInt32();
+                    recruited[i].accountId   = fields[0].GetUInt32();
                     recruited[i].recruiterId = fields[1].GetUInt32();
-                    recruited[i].timestamp = fields[2].GetUInt32();
-                    recruited[i].active = fields[3].GetUInt8();
+                    recruited[i].timestamp   = fields[2].GetUInt32();
+                    recruited[i].active      = fields[3].GetUInt8();
 
                     i++;
                 } while (result->NextRow());
