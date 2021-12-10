@@ -188,7 +188,7 @@ class RecruitAFriendExpire : public WorldScript
 
         void OnStartup() override
         {
-            duration = sConfigMgr->GetIntDefault("RecruitAFriend.Duration", 90);
+            duration = sConfigMgr->GetOption<int32>("RecruitAFriend.Duration", 90);
         }
 
         void OnUpdate(uint32 diff) override
