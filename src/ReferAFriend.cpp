@@ -6,6 +6,7 @@
 using namespace Acore::ChatCommands;
 
 uint32 duration;
+uint32 age;
 uint32 rewardDays;
 bool rewardSwiftZhevra;
 bool rewardTouringRocket;
@@ -50,12 +51,11 @@ class ReferAFriendCommands : public CommandScript
             }
 
             uint32 referralStatus = ReferralStatus(referralAccountId);
-
             if (referralStatus > 0)
             {
                 if (referralStatus == 1)
                     ChatHandler(handler->GetSession()).SendSysMessage("A referral of that account is currently |cff4CFF00active|r.");
-                else if (referralStatus == 2)
+                else
                     ChatHandler(handler->GetSession()).SendSysMessage("|cffFF0000A referral of that account has |cffFF0000expired|r.");
 
                 return true;
@@ -64,6 +64,12 @@ class ReferAFriendCommands : public CommandScript
             if (WhoReferred(referrerAccountId) == referralAccountId)
             {
                 ChatHandler(handler->GetSession()).PSendSysMessage("You can't refer |cff4CFF00%s|r because they referred you.", target->GetConnectedPlayer()->GetName());
+                return true;
+            }
+
+            if (!IsReferralValid(referralAccountId) && age > 0)
+            {
+                ChatHandler(handler->GetSession()).PSendSysMessage("You can't refer |cffFF0000%s|r because their account was created more than %i days ago.", target->GetConnectedPlayer()->GetName(), age);
                 return true;
             }
 
@@ -93,6 +99,16 @@ class ReferAFriendCommands : public CommandScript
         }
 
         private:
+            static bool IsReferralValid(uint32 accountId)
+            {
+                QueryResult result = LoginDatabase.PQuery("SELECT * FROM `account` WHERE `id` = %i AND `joindate` > NOW() - INTERVAL %i DAY", accountId, age);
+
+                if (!result)
+                    return false;
+
+                return true;
+            }
+
             static int ReferralStatus(uint32 accountId)
             {
                 QueryResult result = LoginDatabase.PQuery("SELECT `active` FROM `mod_referafriend` WHERE `id` = %i", accountId);
@@ -208,12 +224,13 @@ class ReferAFriendWorld : public WorldScript
         {
             // 60 minutes
             timeDelay = 60 * (60 * 1000);
-            currentTime = 0;
+            currentTime = timeDelay;
         }
 
         void OnStartup() override
         {
             duration = sConfigMgr->GetOption<int32>("ReferAFriend.Duration", 90);
+            age = sConfigMgr->GetOption<int32>("ReferAFriend.AccountAge", 7);
             rewardDays = sConfigMgr->GetOption<int32>("ReferAFriend.Rewards.Days", 30);
             rewardSwiftZhevra = sConfigMgr->GetOption<bool>("ReferAFriend.Rewards.SwiftZhevra", 1);
             rewardTouringRocket = sConfigMgr->GetOption<bool>("ReferAFriend.Rewards.TouringRocket", 1);
@@ -227,7 +244,9 @@ class ReferAFriendWorld : public WorldScript
 
                 if (currentTime > timeDelay)
                 {
-                    CheckExpiredReferrals();
+                    LoginDatabase.DirectPExecute("UPDATE `account` SET `recruiter` = 0 WHERE `id` IN (SELECT `id` FROM `mod_referafriend` WHERE `referral_date` < NOW() - INTERVAL %i DAY AND active = 1)", duration);
+                    LoginDatabase.DirectPExecute("UPDATE `mod_referafriend` SET `active` = 0 WHERE `referral_date` < NOW() - INTERVAL %i DAY AND `active` = 1", duration);
+
                     currentTime = 0;
                 }
             }
@@ -236,12 +255,6 @@ class ReferAFriendWorld : public WorldScript
         private:
             uint32 currentTime;
             uint32 timeDelay;
-
-            void CheckExpiredReferrals()
-            {
-                LoginDatabase.DirectPExecute("UPDATE `account` SET `recruiter` = 0 WHERE `id` IN (SELECT `id` FROM `mod_referafriend` WHERE `referral_date` < NOW() - INTERVAL %i DAY AND active = 1)", duration);
-                LoginDatabase.DirectPExecute("UPDATE `mod_referafriend` SET `active` = 0 WHERE `referral_date` < NOW() - INTERVAL %i DAY AND `active` = 1", duration);
-            }
 };
 
 void AddReferAFriendScripts()

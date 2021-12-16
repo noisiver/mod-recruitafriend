@@ -1,22 +1,29 @@
 [worldserver]
 
+###
 # The amount of days that a referral will stay active
 # A value of 0 means it will never expire
 ReferAFriend.Duration = 90
+###
 
-# This defines the amount of days since the referral that
-# is required before the accounts receive special rewards
-#
-# The rewards will be sent to the in-game mailbox to all
-# characters on the accounts, both already existing and
-# new characters. Both the referrer and referred account
-# will receive the rewards
-#
-# If set to 0, all rewards will be disabled
+###
+# The amount of days since the account was created where it can still be referred. Accounts older than this amount of days will not be able to be referred
+# A value of 0 will allow any account, no matter their age, to be referred
+ReferAFriend.AccountAge = 7
+###
+
+###
+# This defines the amount of days since the referral that is required before the accounts receive special rewards
+# All rewards are disabled if this is set to 0
 ReferAFriend.Rewards.Days = 30
+###
 
-# This setting gives the player the Swift Zhevra item
+###
+# This setting gives the players the Swift Zhevra item
 ReferAFriend.Rewards.SwiftZhevra = 1
+###
 
-# This setting gives the player the X-53 Touring Rocket item
+###
+# This setting gives the players the X-53 Touring Rocket item
 ReferAFriend.Rewards.TouringRocket = 1
+###
