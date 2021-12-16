@@ -2,4 +2,4 @@
 
 # The amount of days that a referral will stay active
 # A value of 0 will cause it to never expire
-RecruitAFriend.Duration = 90
+ReferAFriend.Duration = 90

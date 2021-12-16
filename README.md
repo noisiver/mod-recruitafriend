@@ -1,11 +1,11 @@
-# Recruit A Friend
+# Refer A Friend
 This is a module for [AzerothCore](https://github.com/azerothcore/azerothcore-wotlk).
 
 # Features
 This module will add two in-game commands.
 
-**.recruit help** will give some basic information on how to use the feature.
-**.recruit friend <name>** will add the users account id as a recruiter of the targetted characters account.
+**.refer help** will give some basic information on how to use the feature.
+**.refer friend <name>** will add the users account id as a referrer of the targetted characters account.
 
 There's a configuration option to determine how long a referral lasts. Setting that value to 0 means it'll never expire.
 
@@ -22,7 +22,7 @@ This module is part of my collection of modules.
 
 [LevelReward](https://github.com/tkn963/mod-levelreward) : Gives players a reward of gold when reaching specific levels.
 
-[RecruitAFriend](https://github.com/tkn963/mod-recruitafriend) : Lets players activate recruit a friend with an in-game command.
+[ReferAFriend](https://github.com/tkn963/mod-referafriend) : Lets players activate refer a friend with an in-game command.
 
 [SpawnPoints](https://github.com/tkn963/mod-spawnpoints) : Makes new characters spawn in specified locations when entering the world for the first time.
 
