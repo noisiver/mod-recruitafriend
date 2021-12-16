@@ -119,7 +119,7 @@ class ReferAFriendCommand : public CommandScript
         private:
             static void LoadReferredAccounts()
             {
-                referrer.clear();
+                referred.clear();
 
                 QueryResult result = LoginDatabase.Query("SELECT `id`, `referrer`, `referral_date`, `active` FROM `mod_referafriend` ORDER BY `id` ASC");
 
