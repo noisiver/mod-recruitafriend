@@ -6,6 +6,9 @@
 using namespace Acore::ChatCommands;
 
 uint32 duration;
+uint32 rewardDays;
+bool rewardSwiftZhevra;
+bool rewardTouringRocket;
 
 class ReferAFriendCommands : public CommandScript
 {
@@ -129,7 +132,73 @@ class ReferAFriendPlayer : public PlayerScript
         {
             ChatHandler(player->GetSession()).PSendSysMessage("This server allows the use of the refer a friend feature.");
             ChatHandler(player->GetSession()).PSendSysMessage("Use the command |cff4CFF00.refer help|r to get started.");
+
+            if (rewardDays > 0)
+            {
+                if (!IsEligible(player->GetSession()->GetAccountId()) && duration > 0)
+                    return;
+
+                if (IsRewarded(player->GetGUID().GetCounter()))
+                    return;
+
+                if (rewardSwiftZhevra)
+                    SendMailTo(player, "Swift Zhevra", "I found this stray Zhevra walking around The Barrens, aimlessly. I figured you, if anyone, could give it a good home!", 37719, 1);
+
+                if (rewardTouringRocket)
+                    SendMailTo(player, "X-53 Touring Rocket", "This rocket was found flying around Northrend, with what seemed like no purpose. Perhaps you could put it to good use?", 54860, 1);
+
+                CharacterDatabase.DirectPExecute("UPDATE `characters` SET `referRewarded` = 1 WHERE `guid` = %i", player->GetGUID().GetCounter());
+            }
         }
+
+        private:
+            bool IsEligible(uint32 accountId)
+            {
+                QueryResult result = LoginDatabase.PQuery("SELECT * FROM `mod_referafriend` WHERE `referral_date` < NOW() - INTERVAL %i DAY AND `id` = %i OR `referrer` = %i", rewardDays, accountId, accountId);
+
+                if (!result)
+                    return false;
+
+                return true;
+            }
+
+            bool IsRewarded(uint32 characterGuid)
+            {
+                QueryResult result = CharacterDatabase.PQuery("SELECT `referRewarded` FROM `characters` WHERE `guid` = %i", characterGuid);
+
+                if (!result)
+                    return true;
+
+                Field* fields = result->Fetch();
+                uint8 rewarded = fields[0].GetInt8();
+
+                if (rewarded != 0)
+                        return true;
+
+                return false;
+            }
+
+            void SendMailTo(Player* receiver, std::string subject, std::string body, uint32 itemId, uint32 itemCount)
+            {
+                uint32 guid = receiver->GetGUID().GetCounter();
+
+                CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
+                MailDraft* mail  = new MailDraft(subject, body);
+                ItemTemplate const* pProto = sObjectMgr->GetItemTemplate(itemId);
+                if (pProto)
+                {
+                    Item* mailItem = Item::CreateItem(itemId, itemCount);
+                    if (mailItem)
+                    {
+                        mailItem->SaveToDB(trans);
+                        mail->AddItem(mailItem);
+                    }
+                }
+
+                mail->SendMailTo(trans, receiver ? receiver : MailReceiver(guid), MailSender(MAIL_NORMAL, 0, MAIL_STATIONERY_GM), MAIL_CHECK_MASK_RETURNED);
+                delete mail;
+                CharacterDatabase.CommitTransaction(trans);
+            }
 };
 
 class ReferAFriendWorld : public WorldScript
@@ -137,14 +206,17 @@ class ReferAFriendWorld : public WorldScript
     public:
         ReferAFriendWorld() : WorldScript("ReferAFriendWorld")
         {
-            // 3600 seconds is 60 minutes
-            timeDelay = (3600 * 1000);
+            // 60 minutes
+            timeDelay = 60 * (60 * 1000);
             currentTime = 0;
         }
 
         void OnStartup() override
         {
             duration = sConfigMgr->GetOption<int32>("ReferAFriend.Duration", 90);
+            rewardDays = sConfigMgr->GetOption<int32>("ReferAFriend.Rewards.Days", 30);
+            rewardSwiftZhevra = sConfigMgr->GetOption<bool>("ReferAFriend.Rewards.SwiftZhevra", 1);
+            rewardTouringRocket = sConfigMgr->GetOption<bool>("ReferAFriend.Rewards.TouringRocket", 1);
         }
 
         void OnUpdate(uint32 diff) override

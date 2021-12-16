@@ -1,5 +1,21 @@
 [worldserver]
 
 # The amount of days that a referral will stay active
-# A value of 0 will cause it to never expire
+# A value of 0 means it will never expire
 ReferAFriend.Duration = 90
+
+# This defines the amount of days since the referral that
+# is required before the accounts receive special rewards
+#
+# The rewards will be sent to the in-game mailbox to all
+# characters on the accounts, both already existing and
+# new characters
+#
+# If set to 0, all rewards will be disabled
+ReferAFriend.Rewards.Days = 30
+
+# This setting gives the player the Swift Zhevra item
+ReferAFriend.Rewards.SwiftZhevra = 1
+
+# This setting gives the player the X-53 Touring Rocket item
+ReferAFriend.Rewards.TouringRocket = 1
