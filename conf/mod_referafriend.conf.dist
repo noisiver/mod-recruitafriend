@@ -9,7 +9,8 @@ ReferAFriend.Duration = 90
 #
 # The rewards will be sent to the in-game mailbox to all
 # characters on the accounts, both already existing and
-# new characters
+# new characters. Both the referrer and referred account
+# will receive the rewards
 #
 # If set to 0, all rewards will be disabled
 ReferAFriend.Rewards.Days = 30
