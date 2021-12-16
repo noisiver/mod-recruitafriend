@@ -5,34 +5,12 @@
 
 using namespace Acore::ChatCommands;
 
-struct Referred
-{
-    uint32 accountId;
-    uint32 referrerId;
-    time_t timestamp;
-    uint8 active;
-};
-
-std::vector<Referred> referred;
-
 uint32 duration;
 
-class ReferAFriendAnnounce : public PlayerScript
+class ReferAFriendCommands : public CommandScript
 {
     public:
-        ReferAFriendAnnounce() : PlayerScript("ReferAFriendAnnounce") {}
-
-        void OnLogin(Player* player) override
-        {
-            ChatHandler(player->GetSession()).PSendSysMessage("This server allows the use of the refer a friend feature.");
-            ChatHandler(player->GetSession()).PSendSysMessage("Use the command |cff4CFF00.refer help|r to get started.");
-        }
-};
-
-class ReferAFriendCommand : public CommandScript
-{
-    public:
-        ReferAFriendCommand() : CommandScript("ReferAFriendCommand") {}
+        ReferAFriendCommands() : CommandScript("ReferAFriendCommands") {}
 
         ChatCommandTable GetCommands() const override
         {
@@ -68,27 +46,22 @@ class ReferAFriendCommand : public CommandScript
                 return true;
             }
 
-            LoadReferredAccounts();
+            uint32 referralStatus = ReferralStatus(referralAccountId);
 
-            if (IsReferralActive(referralAccountId))
+            if (referralStatus > 0)
             {
-                ChatHandler(handler->GetSession()).SendSysMessage("A referral of that account is currently |cff4CFF00active|r.");
+                if (referralStatus == 1)
+                    ChatHandler(handler->GetSession()).SendSysMessage("A referral of that account is currently |cff4CFF00active|r.");
+                else if (referralStatus == 2)
+                    ChatHandler(handler->GetSession()).SendSysMessage("|cffFF0000A referral of that account has |cffFF0000expired|r.");
+
                 return true;
             }
 
-            if (!IsReferralValid(referralAccountId))
+            if (WhoReferred(referrerAccountId) == referralAccountId)
             {
-                ChatHandler(handler->GetSession()).SendSysMessage("|cffFF0000A referral of that account has |cffFF0000expired|r.");
+                ChatHandler(handler->GetSession()).PSendSysMessage("You can't refer |cff4CFF00%s|r because they referred you.", target->GetConnectedPlayer()->GetName());
                 return true;
-            }
-
-            if (!IsReferralValid(referrerAccountId))
-            {
-                if (WhoReferred(referrerAccountId) == referralAccountId)
-                {
-                    ChatHandler(handler->GetSession()).PSendSysMessage("You can't refer |cff4CFF00%s|r because they referred you.", target->GetConnectedPlayer()->GetName());
-                    return true;
-                }
             }
 
             LoginDatabase.DirectPExecute("UPDATE `account` SET `recruiter` = %i WHERE `id` = %i", referrerAccountId, referralAccountId);
@@ -117,73 +90,56 @@ class ReferAFriendCommand : public CommandScript
         }
 
         private:
-            static void LoadReferredAccounts()
+            static int ReferralStatus(uint32 accountId)
             {
-                referred.clear();
-
-                QueryResult result = LoginDatabase.Query("SELECT `id`, `referrer`, `referral_date`, `active` FROM `mod_referafriend` ORDER BY `id` ASC");
+                QueryResult result = LoginDatabase.PQuery("SELECT `active` FROM `mod_referafriend` WHERE `id` = %i", accountId);
 
                 if (!result)
-                    return;
+                    return 0;
 
-                int i = 0;
+                Field* fields = result->Fetch();
+                uint32 active = fields[0].GetUInt32();
 
-                do
-                {
-                    Field* fields = result->Fetch();
-
-                    referred.push_back(Referred());
-                    referred[i].accountId  = fields[0].GetUInt32();
-                    referred[i].referrerId = fields[1].GetUInt32();
-                    referred[i].timestamp  = fields[2].GetUInt32();
-                    referred[i].active     = fields[3].GetUInt8();
-
-                    i++;
-                } while (result->NextRow());
-            }
-
-            static bool IsReferralValid(uint32 accountId)
-            {
-                for (int i = 0; i < referred.size(); i++)
-                {
-                    if (referred[i].accountId == accountId)
-                        return false;
-                }
-
-                return true;
-            }
-
-            static bool IsReferralActive(uint32 accountId)
-            {
-                for (int i = 0; i < referred.size(); i++)
-                {
-                    if (referred[i].accountId == accountId)
-                        if (referred[i].active == 1)
-                            return true;
-                }
-
-                return false;
+                if (active == 1)
+                    return 1;
+                else
+                    return 2;
             }
 
             static int WhoReferred(uint32 accountId)
             {
-                for (int i = 0; i < referred.size(); i++)
-                {
-                    if (referred[i].accountId == accountId)
-                        return referred[i].referrerId;
-                }
+                QueryResult result = LoginDatabase.PQuery("SELECT `referrer` FROM `mod_referafriend` WHERE `id` = %i", accountId);
 
-                return 0;
+                if (!result)
+                    return 0;
+
+                Field* fields = result->Fetch();
+                uint32 referrerAccountId = fields[0].GetUInt32();
+
+                return referrerAccountId;
             }
 };
 
-class ReferAFriendExpire : public WorldScript
+class ReferAFriendPlayer : public PlayerScript
 {
     public:
-        ReferAFriendExpire() : WorldScript("ReferAFriendExpire")
+        ReferAFriendPlayer() : PlayerScript("ReferAFriendPlayer") {}
+
+        void OnLogin(Player* player) override
+        {
+            ChatHandler(player->GetSession()).PSendSysMessage("This server allows the use of the refer a friend feature.");
+            ChatHandler(player->GetSession()).PSendSysMessage("Use the command |cff4CFF00.refer help|r to get started.");
+        }
+};
+
+class ReferAFriendWorld : public WorldScript
+{
+    public:
+        ReferAFriendWorld() : WorldScript("ReferAFriendWorld")
         {
             // 3600 seconds is 60 minutes
             timeDelay = (3600 * 1000);
+            currentTime = 0;
         }
 
         void OnStartup() override
@@ -218,7 +174,7 @@ class ReferAFriendExpire : public WorldScript
 
 void AddReferAFriendScripts()
 {
-    new ReferAFriendAnnounce();
-    new ReferAFriendCommand();
-    new ReferAFriendExpire();
+    new ReferAFriendCommands();
+    new ReferAFriendPlayer();
+    new ReferAFriendWorld();
 }
