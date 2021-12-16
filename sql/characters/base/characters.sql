@@ -40,6 +40,6 @@ END $$
 
 DELIMITER ;
 
-CALL AddColumn('characters', 'referRewarded', 'TINYINT', '0', 'grantableLevels');
+CALL AddColumn('characters', 'rafRewarded', 'TINYINT', '0', 'grantableLevels');
 
 DROP PROCEDURE IF EXISTS `AddColumn`;

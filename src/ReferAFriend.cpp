@@ -147,7 +147,7 @@ class ReferAFriendPlayer : public PlayerScript
                 if (rewardTouringRocket)
                     SendMailTo(player, "X-53 Touring Rocket", "This rocket was found flying around Northrend, with what seemed like no purpose. Perhaps you could put it to good use?", 54860, 1);
 
-                CharacterDatabase.DirectPExecute("UPDATE `characters` SET `referRewarded` = 1 WHERE `guid` = %i", player->GetGUID().GetCounter());
+                CharacterDatabase.DirectPExecute("UPDATE `characters` SET `rafRewarded` = 1 WHERE `guid` = %i", player->GetGUID().GetCounter());
             }
         }
 
@@ -164,7 +164,7 @@ class ReferAFriendPlayer : public PlayerScript
 
             bool IsRewarded(uint32 characterGuid)
             {
-                QueryResult result = CharacterDatabase.PQuery("SELECT `referRewarded` FROM `characters` WHERE `guid` = %i", characterGuid);
+                QueryResult result = CharacterDatabase.PQuery("SELECT `rafRewarded` FROM `characters` WHERE `guid` = %i", characterGuid);
 
                 if (!result)
                     return true;
