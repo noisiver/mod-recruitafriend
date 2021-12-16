@@ -9,6 +9,8 @@ This module will add two in-game commands.
 
 There's a configuration option to determine how long a referral lasts. Setting that value to 0 means it'll never expire.
 
+Another configuration option gives players rewards for recruiting other players. The rewards are Swift Zhevra and X-53 Touring Rocket, but can be disabled individually. The reward days option determines how many days has to pass since the referral before the accounts are eligible for rewards. Setting it to 0 disables all rewards.
+
 # Additional information
 This module is part of my collection of modules.
 
