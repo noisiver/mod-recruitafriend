@@ -22,6 +22,7 @@ class ReferAFriendCommands : public CommandScript
             {
                 { "friend", HandleReferFriendCommand, SEC_PLAYER, Console::No },
                 { "help", HandleReferHelpCommand, SEC_PLAYER, Console::No },
+                { "info", HandleReferInfoCommand, SEC_PLAYER, Console::No },
             };
 
             static ChatCommandTable commandTable =
@@ -93,6 +94,42 @@ class ReferAFriendCommands : public CommandScript
             else
             {
                 ChatHandler(handler->GetSession()).SendSysMessage("The refer a friend benefits will never expire.");
+            }
+
+            return true;
+        }
+
+        static bool HandleReferInfoCommand(ChatHandler* handler)
+        {
+            uint32 accountId = handler->GetSession()->GetAccountId();
+
+            QueryResult result = LoginDatabase.PQuery("SELECT `referral_date`, `referral_date` + INTERVAL %i DAY, `active` FROM `mod_referafriend` WHERE `id` = %i", duration, accountId);
+            if (result)
+            {
+                Field* fields = result->Fetch();
+                std::string referralDate = fields[0].GetString();
+                std::string expirationDate = fields[1].GetString();
+                uint8 active = fields[2].GetUInt8();
+
+                if (duration > 0)
+                {
+                    if (active)
+                    {
+                        ChatHandler(handler->GetSession()).PSendSysMessage("You were referred at |cff4CFF00%s|r and it will expire at |cffFF0000%s|r.", referralDate, expirationDate);
+                    }
+                    else
+                    {
+                        ChatHandler(handler->GetSession()).PSendSysMessage("You were referred at |cff4CFF00%s|r and it expired at |cffFF0000%s|r.", referralDate, expirationDate);
+                    }
+                }
+                else
+                {
+                    ChatHandler(handler->GetSession()).PSendSysMessage("You were referred at |cff4CFF00%s|r and it will |cffFF0000never|r expire.", referralDate, expirationDate);
+                }
+            }
+            else
+            {
+                ChatHandler(handler->GetSession()).PSendSysMessage("You have |cffFF0000not|r been referred.");
             }
 
             return true;
