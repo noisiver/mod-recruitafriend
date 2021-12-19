@@ -228,7 +228,7 @@ class ReferAFriendPlayer : public PlayerScript
                 uint8 rewarded = fields[0].GetInt8();
 
                 if (rewarded != 0)
-                        return true;
+                    return true;
 
                 return false;
             }
