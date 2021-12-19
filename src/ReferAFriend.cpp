@@ -32,7 +32,7 @@ class ReferAFriendCommand : public CommandScript
                 { "decline", HandleReferDeclineCommand, SEC_PLAYER, Console::No },
                 { "friend", HandleReferFriendCommand, SEC_PLAYER, Console::No },
                 { "help", HandleReferHelpCommand, SEC_PLAYER, Console::No },
-                { "info", HandleReferInfoCommand, SEC_PLAYER, Console::No },
+                { "status", HandleReferStatusCommand, SEC_PLAYER, Console::No },
             };
 
             static ChatCommandTable commandTable =
@@ -166,12 +166,12 @@ class ReferAFriendCommand : public CommandScript
                 ChatHandler(handler->GetSession()).SendSysMessage("The refer a friend benefits will never expire.");
             }
 
-            ChatHandler(handler->GetSession()).SendSysMessage("You can see the status of your referral using |cff4CFF00.refer info|r.");
+            ChatHandler(handler->GetSession()).SendSysMessage("You can see the status of your referral using |cff4CFF00.refer status|r.");
 
             return true;
         }
 
-        static bool HandleReferInfoCommand(ChatHandler* handler)
+        static bool HandleReferStatusCommand(ChatHandler* handler)
         {
             uint32 accountId = handler->GetSession()->GetAccountId();
 
