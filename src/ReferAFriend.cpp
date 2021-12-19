@@ -11,10 +11,10 @@ uint32 rewardDays;
 bool rewardSwiftZhevra;
 bool rewardTouringRocket;
 
-class ReferAFriendCommands : public CommandScript
+class ReferAFriendCommand : public CommandScript
 {
     public:
-        ReferAFriendCommands() : CommandScript("ReferAFriendCommands") {}
+        ReferAFriendCommand() : CommandScript("ReferAFriendCommand") {}
 
         ChatCommandTable GetCommands() const override
         {
@@ -266,7 +266,7 @@ class ReferAFriendWorld : public WorldScript
             currentTime = timeDelay;
         }
 
-        void OnStartup() override
+        void OnAfterConfigLoad(bool /*reload*/) override
         {
             duration = sConfigMgr->GetOption<int32>("ReferAFriend.Duration", 90);
             age = sConfigMgr->GetOption<int32>("ReferAFriend.AccountAge", 7);
@@ -298,7 +298,7 @@ class ReferAFriendWorld : public WorldScript
 
 void AddReferAFriendScripts()
 {
-    new ReferAFriendCommands();
+    new ReferAFriendCommand();
     new ReferAFriendPlayer();
     new ReferAFriendWorld();
 }
