@@ -5,6 +5,14 @@
 
 using namespace Acore::ChatCommands;
 
+struct Referrals
+{
+    uint32 referralId;
+    uint32 referrerId;
+};
+
+std::vector<Referrals> pendingReferrals;
+
 uint32 duration;
 uint32 age;
 uint32 rewardDays;
@@ -20,6 +28,8 @@ class ReferAFriendCommand : public CommandScript
         {
             static ChatCommandTable referCommandTable =
             {
+                { "accept", HandleReferAcceptCommand, SEC_PLAYER, Console::No },
+                { "decline", HandleReferDeclineCommand, SEC_PLAYER, Console::No },
                 { "friend", HandleReferFriendCommand, SEC_PLAYER, Console::No },
                 { "help", HandleReferHelpCommand, SEC_PLAYER, Console::No },
                 { "info", HandleReferInfoCommand, SEC_PLAYER, Console::No },
@@ -33,6 +43,49 @@ class ReferAFriendCommand : public CommandScript
             return commandTable;
         }
 
+        static bool HandleReferAcceptCommand(ChatHandler* handler, Optional<PlayerIdentifier> target)
+        {
+            uint32 referralAccountId = handler->GetSession()->GetAccountId();
+
+            for (int i = 0; i < pendingReferrals.size(); i++)
+            {
+                if (pendingReferrals[i].referralId == referralAccountId)
+                {
+                    pendingReferrals.erase(pendingReferrals.begin() + i);
+
+                    LoginDatabase.DirectPExecute("UPDATE `account` SET `recruiter` = %i WHERE `id` = %i", pendingReferrals[i].referrerId, pendingReferrals[i].referralId);
+                    LoginDatabase.DirectPExecute("INSERT INTO `mod_referafriend` (`id`, `referrer`) VALUES (%i, %i)", pendingReferrals[i].referralId, pendingReferrals[i].referrerId);
+                    ChatHandler(handler->GetSession()).SendSysMessage("You have |cff4CFF00accepted|r the referral request.");
+                    ChatHandler(handler->GetSession()).SendSysMessage("Remember that you have to log out and back in for the changes to take effect.");
+
+                    return true;
+                }
+            }
+
+            ChatHandler(handler->GetSession()).SendSysMessage("You don't have a pending referral request.");
+
+            return true;
+        }
+
+        static bool HandleReferDeclineCommand(ChatHandler* handler)
+        {
+            uint32 referralAccountId = handler->GetSession()->GetAccountId();
+
+            for (int i = 0; i < pendingReferrals.size(); i++)
+            {
+                if (pendingReferrals[i].referralId == referralAccountId)
+                {
+                    pendingReferrals.erase(pendingReferrals.begin() + i);
+                    ChatHandler(handler->GetSession()).SendSysMessage("You have |cffFF0000declined|r the referral request.");
+                    return true;
+                }
+            }
+
+            ChatHandler(handler->GetSession()).SendSysMessage("You don't have a pending referral request.");
+
+            return true;
+        }
+
         static bool HandleReferFriendCommand(ChatHandler* handler, Optional<PlayerIdentifier> target)
         {
             if (!target || !target->IsConnected() || target->GetConnectedPlayer()->IsGameMaster())
@@ -43,7 +96,7 @@ class ReferAFriendCommand : public CommandScript
             }
 
             uint32 referrerAccountId = handler->GetSession()->GetAccountId();
-            uint32 referralAccountId  = target->GetConnectedPlayer()->GetSession()->GetAccountId();
+            uint32 referralAccountId = target->GetConnectedPlayer()->GetSession()->GetAccountId();
 
             if (referrerAccountId == referralAccountId)
             {
@@ -57,7 +110,7 @@ class ReferAFriendCommand : public CommandScript
                 if (referralStatus == 1)
                     ChatHandler(handler->GetSession()).SendSysMessage("A referral of that account is currently |cff4CFF00active|r.");
                 else
-                    ChatHandler(handler->GetSession()).SendSysMessage("|cffFF0000A referral of that account has |cffFF0000expired|r.");
+                    ChatHandler(handler->GetSession()).SendSysMessage("A referral of that account has |cffFF0000expired|r.");
 
                 return true;
             }
@@ -74,10 +127,25 @@ class ReferAFriendCommand : public CommandScript
                 return true;
             }
 
-            LoginDatabase.DirectPExecute("UPDATE `account` SET `recruiter` = %i WHERE `id` = %i", referrerAccountId, referralAccountId);
-            LoginDatabase.DirectPExecute("INSERT INTO `mod_referafriend` (`id`, `referrer`) VALUES (%i, %i)", referralAccountId, referrerAccountId);
-            ChatHandler(handler->GetSession()).PSendSysMessage("You have successfully referred |cff4CFF00%s|r.", target->GetConnectedPlayer()->GetName());
-            ChatHandler(handler->GetSession()).SendSysMessage("You both need to log out and back in for the changes to take effect.");
+            for (int i = 0; i < pendingReferrals.size(); i++)
+            {
+                if (pendingReferrals[i].referralId == referralAccountId)
+                {
+                    ChatHandler(handler->GetSession()).PSendSysMessage("You can't refer |cffFF0000%s|r because they already have a pending referral request.", target->GetConnectedPlayer()->GetName());
+                    return true;
+                }
+            }
+
+            uint32 index = pendingReferrals.size();
+            pendingReferrals.push_back(Referrals());
+            pendingReferrals[index].referralId = referralAccountId;
+            pendingReferrals[index].referrerId = referrerAccountId;
+
+            ChatHandler(handler->GetSession()).PSendSysMessage("You have sent a referral request to |cff4CFF00%s|r.", target->GetConnectedPlayer()->GetName());
+            ChatHandler(handler->GetSession()).SendSysMessage("The player has to |cff4CFF00accept|r, or |cff4CFF00decline|r, the pending request.");
+
+            ChatHandler(target->GetConnectedPlayer()->GetSession()).PSendSysMessage("|cff4CFF00%s|r has sent you a referral request.", handler->GetPlayer()->GetName());
+            ChatHandler(target->GetConnectedPlayer()->GetSession()).SendSysMessage("Use |cff4CFF00.refer accept|r to accept or |cff4CFF00.refer decline|r to decline the request.");
 
             return true;
         }
@@ -85,6 +153,8 @@ class ReferAFriendCommand : public CommandScript
         static bool HandleReferHelpCommand(ChatHandler* handler)
         {
             ChatHandler(handler->GetSession()).SendSysMessage("You can refer a friend using |cff4CFF00.refer friend <name>|r.");
+            ChatHandler(handler->GetSession()).SendSysMessage("You can accept a pending referral using |cff4CFF00.refer accept|r.");
+            ChatHandler(handler->GetSession()).SendSysMessage("You can decline a pending referral using |cff4CFF00.refer decline|r.");
             ChatHandler(handler->GetSession()).PSendSysMessage("You will both receive a bonus to experience and reputation up to level %i.", sWorld->getIntConfig(CONFIG_MAX_RECRUIT_A_FRIEND_BONUS_PLAYER_LEVEL));
 
             if (duration > 0)
@@ -115,17 +185,17 @@ class ReferAFriendCommand : public CommandScript
 
                 if (!active)
                 {
-                    ChatHandler(handler->GetSession()).PSendSysMessage("You were referred at |cff4CFF00%s|r and it expired at |cffFF0000%s|r.", referralDate, expirationDate);
+                    ChatHandler(handler->GetSession()).PSendSysMessage("You were referred at |cff4CFF00%s|r and the referral expired at |cffFF0000%s|r.", referralDate, expirationDate);
                 }
                 else
                 {
                     if (duration > 0)
                     {
-                        ChatHandler(handler->GetSession()).PSendSysMessage("You were referred at |cff4CFF00%s|r and it will expire at |cffFF0000%s|r.", referralDate, expirationDate);
+                        ChatHandler(handler->GetSession()).PSendSysMessage("You were referred at |cff4CFF00%s|r and the referral will expire at |cffFF0000%s|r.", referralDate, expirationDate);
                     }
                     else
                     {
-                        ChatHandler(handler->GetSession()).PSendSysMessage("You were referred at |cff4CFF00%s|r and it will |cffFF0000never|r expire.", referralDate, expirationDate);
+                        ChatHandler(handler->GetSession()).PSendSysMessage("You were referred at |cff4CFF00%s|r and the referral will |cffFF0000never|r expire.", referralDate, expirationDate);
                     }
                 }
             }
