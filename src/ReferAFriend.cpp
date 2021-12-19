@@ -113,20 +113,20 @@ class ReferAFriendCommands : public CommandScript
                 std::string expirationDate = fields[1].GetString();
                 uint8 active = fields[2].GetUInt8();
 
-                if (duration > 0)
+                if (!active)
                 {
-                    if (active)
+                    ChatHandler(handler->GetSession()).PSendSysMessage("You were referred at |cff4CFF00%s|r and it expired at |cffFF0000%s|r.", referralDate, expirationDate);
+                }
+                else
+                {
+                    if (duration > 0)
                     {
                         ChatHandler(handler->GetSession()).PSendSysMessage("You were referred at |cff4CFF00%s|r and it will expire at |cffFF0000%s|r.", referralDate, expirationDate);
                     }
                     else
                     {
-                        ChatHandler(handler->GetSession()).PSendSysMessage("You were referred at |cff4CFF00%s|r and it expired at |cffFF0000%s|r.", referralDate, expirationDate);
+                        ChatHandler(handler->GetSession()).PSendSysMessage("You were referred at |cff4CFF00%s|r and it will |cffFF0000never|r expire.", referralDate, expirationDate);
                     }
-                }
-                else
-                {
-                    ChatHandler(handler->GetSession()).PSendSysMessage("You were referred at |cff4CFF00%s|r and it will |cffFF0000never|r expire.", referralDate, expirationDate);
                 }
             }
             else
