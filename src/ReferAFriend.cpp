@@ -96,6 +96,8 @@ class ReferAFriendCommands : public CommandScript
                 ChatHandler(handler->GetSession()).SendSysMessage("The refer a friend benefits will never expire.");
             }
 
+            ChatHandler(handler->GetSession()).SendSysMessage("You can see the status of your referral using |cff4CFF00.refer info|r.");
+
             return true;
         }
 
