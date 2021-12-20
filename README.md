@@ -4,8 +4,7 @@ This is a module for [AzerothCore](https://github.com/azerothcore/azerothcore-wo
 # Features
 This module will add two in-game commands.
 
-**.refer help** will give some basic information on how to use the feature.
-**.refer friend <name>** will add the users account id as a referrer of the targetted characters account.
+**.refer help** will give some information on how to use the feature.
 
 There's a configuration option to determine how long a referral lasts. Setting that value to 0 means it'll never expire.
 
