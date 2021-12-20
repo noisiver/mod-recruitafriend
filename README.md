@@ -2,7 +2,7 @@
 This is a module for [AzerothCore](https://github.com/azerothcore/azerothcore-wotlk).
 
 # Features
-This module will add two in-game commands.
+This module adds five new in-game commands.
 
 **.refer help** will give some information on how to use the feature.
 
