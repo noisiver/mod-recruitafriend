@@ -56,7 +56,7 @@ class ReferAFriendCommand : public CommandScript
                     LoginDatabase.DirectPExecute("UPDATE `account` SET `recruiter` = %i WHERE `id` = %i", pendingReferrals[i].referrerId, pendingReferrals[i].referralId);
                     LoginDatabase.DirectPExecute("INSERT INTO `mod_referafriend` (`id`, `referrer`) VALUES (%i, %i)", pendingReferrals[i].referralId, pendingReferrals[i].referrerId);
                     ChatHandler(handler->GetSession()).SendSysMessage("You have |cff4CFF00accepted|r the referral request.");
-                    ChatHandler(handler->GetSession()).SendSysMessage("Remember that you have to log out and back in for the changes to take effect.");
+                    ChatHandler(handler->GetSession()).SendSysMessage("You have to log out and back in for the changes to take effect.");
 
                     return true;
                 }
@@ -143,6 +143,7 @@ class ReferAFriendCommand : public CommandScript
 
             ChatHandler(handler->GetSession()).PSendSysMessage("You have sent a referral request to |cff4CFF00%s|r.", target->GetConnectedPlayer()->GetName());
             ChatHandler(handler->GetSession()).SendSysMessage("The player has to |cff4CFF00accept|r, or |cff4CFF00decline|r, the pending request.");
+            ChatHandler(handler->GetSession()).SendSysMessage("If they accept the request, you have to log out and back in for the changes to take effect.");
 
             ChatHandler(target->GetConnectedPlayer()->GetSession()).PSendSysMessage("|cff4CFF00%s|r has sent you a referral request.", handler->GetPlayer()->GetName());
             ChatHandler(target->GetConnectedPlayer()->GetSession()).SendSysMessage("Use |cff4CFF00.refer accept|r to accept or |cff4CFF00.refer decline|r to decline the request.");
