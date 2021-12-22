@@ -333,7 +333,7 @@ class ReferAFriendWorld : public WorldScript
         ReferAFriendWorld() : WorldScript("ReferAFriendWorld")
         {
             // 60 minutes
-            timeDelay = 60 * (60 * 1000);
+            timeDelay = 1h;
             currentTime = timeDelay;
         }
 
@@ -350,21 +350,21 @@ class ReferAFriendWorld : public WorldScript
         {
             if (duration > 0)
             {
-                currentTime += diff;
+                currentTime += Milliseconds(diff);
 
                 if (currentTime > timeDelay)
                 {
                     LoginDatabase.DirectPExecute("UPDATE `account` SET `recruiter` = 0 WHERE `id` IN (SELECT `id` FROM `mod_referafriend` WHERE `referral_date` < NOW() - INTERVAL %i DAY AND active = 1)", duration);
                     LoginDatabase.DirectPExecute("UPDATE `mod_referafriend` SET `active` = 0 WHERE `referral_date` < NOW() - INTERVAL %i DAY AND `active` = 1", duration);
 
-                    currentTime = 0;
+                    currentTime = 0s;
                 }
             }
         }
 
         private:
-            uint32 currentTime;
-            uint32 timeDelay;
+            Milliseconds currentTime;
+            Milliseconds timeDelay;
 };
 
 void AddReferAFriendScripts()
