@@ -280,7 +280,7 @@ class ReferAFriendPlayer : public PlayerScript
         private:
             bool IsEligible(uint32 accountId)
             {
-                QueryResult result = LoginDatabase.PQuery("SELECT * FROM `mod_referafriend` WHERE `referral_date` < NOW() - INTERVAL %i DAY AND `id` = %i OR `referrer` = %i", rewardDays, accountId, accountId);
+                QueryResult result = LoginDatabase.PQuery("SELECT * FROM `mod_referafriend` WHERE `referral_date` < NOW() - INTERVAL %i DAY AND (`id` = %i OR `referrer` = %i)", rewardDays, accountId, accountId);
 
                 if (!result)
                     return false;
