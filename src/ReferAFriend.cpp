@@ -208,45 +208,45 @@ class ReferAFriendCommand : public CommandScript
             return true;
         }
 
-        private:
-            static bool IsReferralValid(uint32 accountId)
-            {
-                QueryResult result = LoginDatabase.PQuery("SELECT * FROM `account` WHERE `id` = %i AND `joindate` > NOW() - INTERVAL %i DAY", accountId, age);
+    private:
+        static bool IsReferralValid(uint32 accountId)
+        {
+            QueryResult result = LoginDatabase.PQuery("SELECT * FROM `account` WHERE `id` = %i AND `joindate` > NOW() - INTERVAL %i DAY", accountId, age);
 
-                if (!result)
-                    return false;
+            if (!result)
+                return false;
 
-                return true;
-            }
+            return true;
+        }
 
-            static int ReferralStatus(uint32 accountId)
-            {
-                QueryResult result = LoginDatabase.PQuery("SELECT `active` FROM `mod_referafriend` WHERE `id` = %i", accountId);
+        static int ReferralStatus(uint32 accountId)
+        {
+            QueryResult result = LoginDatabase.PQuery("SELECT `active` FROM `mod_referafriend` WHERE `id` = %i", accountId);
 
-                if (!result)
-                    return 0;
+            if (!result)
+                return 0;
 
-                Field* fields = result->Fetch();
-                uint32 active = fields[0].GetUInt32();
+            Field* fields = result->Fetch();
+            uint32 active = fields[0].GetUInt32();
 
-                if (active == 1)
-                    return 1;
-                else
-                    return 2;
-            }
+            if (active == 1)
+                return 1;
+            else
+                return 2;
+        }
 
-            static int WhoReferred(uint32 accountId)
-            {
-                QueryResult result = LoginDatabase.PQuery("SELECT `referrer` FROM `mod_referafriend` WHERE `id` = %i", accountId);
+        static int WhoReferred(uint32 accountId)
+        {
+            QueryResult result = LoginDatabase.PQuery("SELECT `referrer` FROM `mod_referafriend` WHERE `id` = %i", accountId);
 
-                if (!result)
-                    return 0;
+            if (!result)
+                return 0;
 
-                Field* fields = result->Fetch();
-                uint32 referrerAccountId = fields[0].GetUInt32();
+            Field* fields = result->Fetch();
+            uint32 referrerAccountId = fields[0].GetUInt32();
 
-                return referrerAccountId;
-            }
+            return referrerAccountId;
+        }
 };
 
 class ReferAFriendPlayer : public PlayerScript
@@ -277,54 +277,54 @@ class ReferAFriendPlayer : public PlayerScript
             }
         }
 
-        private:
-            bool IsEligible(uint32 accountId)
-            {
-                QueryResult result = LoginDatabase.PQuery("SELECT * FROM `mod_referafriend` WHERE `referral_date` < NOW() - INTERVAL %i DAY AND (`id` = %i OR `referrer` = %i)", rewardDays, accountId, accountId);
+    private:
+        bool IsEligible(uint32 accountId)
+        {
+            QueryResult result = LoginDatabase.PQuery("SELECT * FROM `mod_referafriend` WHERE `referral_date` < NOW() - INTERVAL %i DAY AND (`id` = %i OR `referrer` = %i)", rewardDays, accountId, accountId);
 
-                if (!result)
-                    return false;
-
-                return true;
-            }
-
-            bool IsRewarded(uint32 characterGuid)
-            {
-                QueryResult result = CharacterDatabase.PQuery("SELECT `rafRewarded` FROM `characters` WHERE `guid` = %i", characterGuid);
-
-                if (!result)
-                    return true;
-
-                Field* fields = result->Fetch();
-                uint8 rewarded = fields[0].GetInt8();
-
-                if (rewarded != 0)
-                    return true;
-
+            if (!result)
                 return false;
-            }
 
-            void SendMailTo(Player* receiver, std::string subject, std::string body, uint32 itemId, uint32 itemCount)
+            return true;
+        }
+
+        bool IsRewarded(uint32 characterGuid)
+        {
+            QueryResult result = CharacterDatabase.PQuery("SELECT `rafRewarded` FROM `characters` WHERE `guid` = %i", characterGuid);
+
+            if (!result)
+                return true;
+
+            Field* fields = result->Fetch();
+            uint8 rewarded = fields[0].GetInt8();
+
+            if (rewarded != 0)
+                return true;
+
+            return false;
+        }
+
+        void SendMailTo(Player* receiver, std::string subject, std::string body, uint32 itemId, uint32 itemCount)
+        {
+            uint32 guid = receiver->GetGUID().GetCounter();
+
+            CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
+            MailDraft* mail  = new MailDraft(subject, body);
+            ItemTemplate const* pProto = sObjectMgr->GetItemTemplate(itemId);
+            if (pProto)
             {
-                uint32 guid = receiver->GetGUID().GetCounter();
-
-                CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
-                MailDraft* mail  = new MailDraft(subject, body);
-                ItemTemplate const* pProto = sObjectMgr->GetItemTemplate(itemId);
-                if (pProto)
+                Item* mailItem = Item::CreateItem(itemId, itemCount);
+                if (mailItem)
                 {
-                    Item* mailItem = Item::CreateItem(itemId, itemCount);
-                    if (mailItem)
-                    {
-                        mailItem->SaveToDB(trans);
-                        mail->AddItem(mailItem);
-                    }
+                    mailItem->SaveToDB(trans);
+                    mail->AddItem(mailItem);
                 }
-
-                mail->SendMailTo(trans, receiver ? receiver : MailReceiver(guid), MailSender(MAIL_NORMAL, 0, MAIL_STATIONERY_GM), MAIL_CHECK_MASK_RETURNED);
-                delete mail;
-                CharacterDatabase.CommitTransaction(trans);
             }
+
+            mail->SendMailTo(trans, receiver ? receiver : MailReceiver(guid), MailSender(MAIL_NORMAL, 0, MAIL_STATIONERY_GM), MAIL_CHECK_MASK_RETURNED);
+            delete mail;
+            CharacterDatabase.CommitTransaction(trans);
+        }
 };
 
 class ReferAFriendWorld : public WorldScript
@@ -362,9 +362,9 @@ class ReferAFriendWorld : public WorldScript
             }
         }
 
-        private:
-            Milliseconds currentTime;
-            Milliseconds timeDelay;
+    private:
+        Milliseconds currentTime;
+        Milliseconds timeDelay;
 };
 
 void AddReferAFriendScripts()
