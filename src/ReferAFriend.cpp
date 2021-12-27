@@ -51,12 +51,14 @@ class ReferAFriendCommand : public CommandScript
             {
                 if (pendingReferrals[i].referralId == referralAccountId)
                 {
-                    pendingReferrals.erase(pendingReferrals.begin() + i);
-
                     LoginDatabase.DirectPExecute("UPDATE `account` SET `recruiter` = %i WHERE `id` = %i", pendingReferrals[i].referrerId, pendingReferrals[i].referralId);
                     LoginDatabase.DirectPExecute("INSERT INTO `mod_referafriend` (`id`, `referrer`) VALUES (%i, %i)", pendingReferrals[i].referralId, pendingReferrals[i].referrerId);
                     ChatHandler(handler->GetSession()).SendSysMessage("You have |cff4CFF00accepted|r the referral request.");
                     ChatHandler(handler->GetSession()).SendSysMessage("You have to log out and back in for the changes to take effect.");
+
+                    // A little workaround until I figure out a way of properly removing entries from the vector
+                    pendingReferrals[i].referralId = 0;
+                    pendingReferrals[i].referrerId = 0;
 
                     return true;
                 }
@@ -75,7 +77,10 @@ class ReferAFriendCommand : public CommandScript
             {
                 if (pendingReferrals[i].referralId == referralAccountId)
                 {
-                    pendingReferrals.erase(pendingReferrals.begin() + i);
+                    // A little workaround until I figure out a way of properly removing entries from the vector
+                    pendingReferrals[i].referralId = 0;
+                    pendingReferrals[i].referrerId = 0;
+
                     ChatHandler(handler->GetSession()).SendSysMessage("You have |cffFF0000declined|r the referral request.");
                     return true;
                 }
