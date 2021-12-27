@@ -5,14 +5,6 @@
 
 using namespace Acore::ChatCommands;
 
-struct Referrals
-{
-    uint32 referralId;
-    uint32 referrerId;
-};
-
-std::vector<Referrals> pendingReferrals;
-
 uint32 duration;
 uint32 age;
 uint32 rewardDays;
@@ -47,25 +39,23 @@ class ReferAFriendCommand : public CommandScript
         {
             uint32 referralAccountId = handler->GetSession()->GetAccountId();
 
-            for (int i = 0; i < pendingReferrals.size(); i++)
+            QueryResult result = LoginDatabase.PQuery("SELECT `account_id`, `referrer_id` FROM `mod_referafriend` WHERE `account_id` = %i AND `status` = 1", referralAccountId);
+            if (result)
             {
-                if (pendingReferrals[i].referralId == referralAccountId)
-                {
-                    LoginDatabase.DirectPExecute("UPDATE `account` SET `recruiter` = %i WHERE `id` = %i", pendingReferrals[i].referrerId, pendingReferrals[i].referralId);
-                    LoginDatabase.DirectPExecute("INSERT INTO `mod_referafriend` (`id`, `referrer`) VALUES (%i, %i)", pendingReferrals[i].referralId, pendingReferrals[i].referrerId);
-                    ChatHandler(handler->GetSession()).SendSysMessage("You have |cff4CFF00accepted|r the referral request.");
-                    ChatHandler(handler->GetSession()).SendSysMessage("You have to log out and back in for the changes to take effect.");
+                Field* fields = result->Fetch();
+                std::string referralDate = fields[0].GetString();
+                uint32 accountId = fields[0].GetUInt32();
+                uint32 referrerId = fields[1].GetUInt32();
 
-                    // A little workaround until I figure out a way of properly removing entries from the vector
-                    pendingReferrals[i].referralId = 0;
-                    pendingReferrals[i].referrerId = 0;
-
-                    return true;
-                }
+                result = LoginDatabase.PQuery("DELETE FROM `mod_referafriend` WHERE `account_id` = %i AND `status` = 1", accountId);
+                result = LoginDatabase.PQuery("UPDATE `account` SET `recruiter` = %i WHERE `account_id` = %i", referrerId, accountId);
+                result = LoginDatabase.PQuery("INSERT INTO `mod_referafriend` (`account_id`, `referrer_id`, `status`) VALUES (%i, %i, 2)", accountId, referrerId);
+                ChatHandler(handler->GetSession()).SendSysMessage("You have |cff4CFF00accepted|r the referral request.");
+                ChatHandler(handler->GetSession()).SendSysMessage("You have to log out and back in for the changes to take effect.");
+                return true;
             }
 
             ChatHandler(handler->GetSession()).SendSysMessage("You don't have a pending referral request.");
-
             return true;
         }
 
@@ -73,21 +63,15 @@ class ReferAFriendCommand : public CommandScript
         {
             uint32 referralAccountId = handler->GetSession()->GetAccountId();
 
-            for (int i = 0; i < pendingReferrals.size(); i++)
+            QueryResult result = LoginDatabase.PQuery("SELECT `account_id` FROM `mod_referafriend` WHERE `account_id` = %i AND `status` = 1", referralAccountId);
+            if (result)
             {
-                if (pendingReferrals[i].referralId == referralAccountId)
-                {
-                    // A little workaround until I figure out a way of properly removing entries from the vector
-                    pendingReferrals[i].referralId = 0;
-                    pendingReferrals[i].referrerId = 0;
-
-                    ChatHandler(handler->GetSession()).SendSysMessage("You have |cffFF0000declined|r the referral request.");
-                    return true;
-                }
+                result = LoginDatabase.PQuery("DELETE FROM `mod_referafriend` WHERE `account_id` = %i AND `status` = 1", referralAccountId);
+                ChatHandler(handler->GetSession()).SendSysMessage("You have |cffFF0000declined|r the referral request.");
+                return true;
             }
 
             ChatHandler(handler->GetSession()).SendSysMessage("You don't have a pending referral request.");
-
             return true;
         }
 
@@ -113,6 +97,8 @@ class ReferAFriendCommand : public CommandScript
             if (referralStatus > 0)
             {
                 if (referralStatus == 1)
+                    ChatHandler(handler->GetSession()).SendSysMessage("A referral of that account is currently |cffFF0000pending|r.");
+                else if (referralStatus == 2)
                     ChatHandler(handler->GetSession()).SendSysMessage("A referral of that account is currently |cff4CFF00active|r.");
                 else
                     ChatHandler(handler->GetSession()).SendSysMessage("A referral of that account has |cffFF0000expired|r.");
@@ -132,27 +118,19 @@ class ReferAFriendCommand : public CommandScript
                 return true;
             }
 
-            for (int i = 0; i < pendingReferrals.size(); i++)
+            if (IsReferralPending(referralAccountId))
             {
-                if (pendingReferrals[i].referralId == referralAccountId)
-                {
-                    ChatHandler(handler->GetSession()).PSendSysMessage("You can't refer |cffFF0000%s|r because they already have a pending referral request.", target->GetConnectedPlayer()->GetName());
-                    return true;
-                }
+                ChatHandler(handler->GetSession()).PSendSysMessage("You can't refer |cffFF0000%s|r because they already have a pending referral request.", target->GetConnectedPlayer()->GetName());
+                return true;
             }
 
-            uint32 index = pendingReferrals.size();
-            pendingReferrals.push_back(Referrals());
-            pendingReferrals[index].referralId = referralAccountId;
-            pendingReferrals[index].referrerId = referrerAccountId;
-
+            QueryResult result = LoginDatabase.PQuery("INSERT INTO `mod_referafriend` (`account_id`, `referrer_id`, `status`) VALUES (%i, %i, 1)", referralAccountId, referrerAccountId);
             ChatHandler(handler->GetSession()).PSendSysMessage("You have sent a referral request to |cff4CFF00%s|r.", target->GetConnectedPlayer()->GetName());
             ChatHandler(handler->GetSession()).SendSysMessage("The player has to |cff4CFF00accept|r, or |cff4CFF00decline|r, the pending request.");
             ChatHandler(handler->GetSession()).SendSysMessage("If they accept the request, you have to log out and back in for the changes to take effect.");
 
             ChatHandler(target->GetConnectedPlayer()->GetSession()).PSendSysMessage("|cff4CFF00%s|r has sent you a referral request.", handler->GetPlayer()->GetName());
             ChatHandler(target->GetConnectedPlayer()->GetSession()).SendSysMessage("Use |cff4CFF00.refer accept|r to accept or |cff4CFF00.refer decline|r to decline the request.");
-
             return true;
         }
 
@@ -173,7 +151,6 @@ class ReferAFriendCommand : public CommandScript
             }
 
             ChatHandler(handler->GetSession()).SendSysMessage("You can see the status of your referral using |cff4CFF00.refer status|r.");
-
             return true;
         }
 
@@ -181,17 +158,21 @@ class ReferAFriendCommand : public CommandScript
         {
             uint32 accountId = handler->GetSession()->GetAccountId();
 
-            QueryResult result = LoginDatabase.PQuery("SELECT `referral_date`, `referral_date` + INTERVAL %i DAY, `active` FROM `mod_referafriend` WHERE `id` = %i", duration, accountId);
+            QueryResult result = LoginDatabase.PQuery("SELECT `referral_date`, `referral_date` + INTERVAL %i DAY, `status` FROM `mod_referafriend` WHERE `account_id` = %i", duration, accountId);
             if (result)
             {
                 Field* fields = result->Fetch();
                 std::string referralDate = fields[0].GetString();
                 std::string expirationDate = fields[1].GetString();
-                uint8 active = fields[2].GetUInt8();
+                uint8 status = fields[2].GetUInt8();
 
-                if (!active)
+                if (status == 3)
                 {
                     ChatHandler(handler->GetSession()).PSendSysMessage("You were referred at |cff4CFF00%s|r and the referral expired at |cffFF0000%s|r.", referralDate, expirationDate);
+                }
+                else if (status == 2)
+                {
+                    ChatHandler(handler->GetSession()).SendSysMessage("You have no active referral, only a |cff4CFF00pending|r referral.");
                 }
                 else
                 {
@@ -216,7 +197,7 @@ class ReferAFriendCommand : public CommandScript
     private:
         static bool IsReferralValid(uint32 accountId)
         {
-            QueryResult result = LoginDatabase.PQuery("SELECT * FROM `account` WHERE `id` = %i AND `joindate` > NOW() - INTERVAL %i DAY", accountId, age);
+            QueryResult result = LoginDatabase.PQuery("SELECT * FROM `account` WHERE `account_id` = %i AND `joindate` > NOW() - INTERVAL %i DAY", accountId, age);
 
             if (!result)
                 return false;
@@ -226,23 +207,20 @@ class ReferAFriendCommand : public CommandScript
 
         static int ReferralStatus(uint32 accountId)
         {
-            QueryResult result = LoginDatabase.PQuery("SELECT `active` FROM `mod_referafriend` WHERE `id` = %i", accountId);
+            QueryResult result = LoginDatabase.PQuery("SELECT `status` FROM `mod_referafriend` WHERE `account_id` = %i", accountId);
 
             if (!result)
                 return 0;
 
             Field* fields = result->Fetch();
-            uint32 active = fields[0].GetUInt32();
+            uint32 status = fields[0].GetUInt32();
 
-            if (active == 1)
-                return 1;
-            else
-                return 2;
+            return status;
         }
 
         static int WhoReferred(uint32 accountId)
         {
-            QueryResult result = LoginDatabase.PQuery("SELECT `referrer` FROM `mod_referafriend` WHERE `id` = %i", accountId);
+            QueryResult result = LoginDatabase.PQuery("SELECT `referrer_id` FROM `mod_referafriend` WHERE `account_id` = %i", accountId);
 
             if (!result)
                 return 0;
@@ -251,6 +229,16 @@ class ReferAFriendCommand : public CommandScript
             uint32 referrerAccountId = fields[0].GetUInt32();
 
             return referrerAccountId;
+        }
+
+        static bool IsReferralPending(uint32 accountId)
+        {
+            QueryResult result = LoginDatabase.PQuery("SELECT `account_id` FROM `mod_referafriend` WHERE `account_id` = %i AND `status` = 1", accountId);
+
+            if (!result)
+                return false;
+
+            return true;
         }
 };
 
@@ -285,7 +273,7 @@ class ReferAFriendPlayer : public PlayerScript
     private:
         bool IsEligible(uint32 accountId)
         {
-            QueryResult result = LoginDatabase.PQuery("SELECT * FROM `mod_referafriend` WHERE `referral_date` < NOW() - INTERVAL %i DAY AND (`id` = %i OR `referrer` = %i)", rewardDays, accountId, accountId);
+            QueryResult result = LoginDatabase.PQuery("SELECT * FROM `mod_referafriend` WHERE `referral_date` < NOW() - INTERVAL %i DAY AND (`account_id` = %i OR `referrer_id` = %i) AND `status` NOT LIKE 1", rewardDays, accountId, accountId);
 
             if (!result)
                 return false;
@@ -351,6 +339,11 @@ class ReferAFriendWorld : public WorldScript
             rewardTouringRocket = sConfigMgr->GetOption<bool>("ReferAFriend.Rewards.TouringRocket", 1);
         }
 
+        void OnStartup() override
+        {
+            QueryResult result = LoginDatabase.Query("DELETE FROM `mod_referafriend` WHERE `status` = 1");
+        }
+
         void OnUpdate(uint32 diff) override
         {
             if (duration > 0)
@@ -359,8 +352,8 @@ class ReferAFriendWorld : public WorldScript
 
                 if (currentTime > timeDelay)
                 {
-                    LoginDatabase.DirectPExecute("UPDATE `account` SET `recruiter` = 0 WHERE `id` IN (SELECT `id` FROM `mod_referafriend` WHERE `referral_date` < NOW() - INTERVAL %i DAY AND active = 1)", duration);
-                    LoginDatabase.DirectPExecute("UPDATE `mod_referafriend` SET `active` = 0 WHERE `referral_date` < NOW() - INTERVAL %i DAY AND `active` = 1", duration);
+                    LoginDatabase.DirectPExecute("UPDATE `account` SET `recruiter` = 0 WHERE `id` IN (SELECT `account_id` FROM `mod_referafriend` WHERE `referral_date` < NOW() - INTERVAL %i DAY AND status = 2)", duration);
+                    LoginDatabase.DirectPExecute("UPDATE `mod_referafriend` SET `status` = 3 WHERE `referral_date` < NOW() - INTERVAL %i DAY AND `status` = 2", duration);
 
                     currentTime = 0s;
                 }
