@@ -1,4 +1,4 @@
-# Recruit-AFriend
+# Recruit-A-Friend
 This is a module for [AzerothCore](https://github.com/azerothcore/azerothcore-wotlk).
 
 # Features
