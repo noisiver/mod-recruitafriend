@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
 DB_AUTH_CUSTOM_PATHS+=(
-    $MOD_REFERAFRIEND_ROOT"/sql/auth/base/"
+    "$MOD_RECRUITAFRIEND_ROOT/sql/auth/base/"
+)
+
+DB_CHARACTERS_CUSTOM_PATHS+=(
+	"$MOD_RECRUITAFRIEND_ROOT/sql/characters/base/"
 )
