@@ -266,7 +266,7 @@ class ReferAFriendPlayer : public PlayerScript
                 if (rewardTouringRocket)
                     SendMailTo(player, "X-53 Touring Rocket", "This rocket was found flying around Northrend, with what seemed like no purpose. Perhaps you could put it to good use?", 54860, 1);
 
-                CharacterDatabase.DirectPExecute("UPDATE `characters` SET `rafRewarded` = 1 WHERE `guid` = %i", player->GetGUID().GetCounter());
+                QueryResult result = LoginDatabase.PQuery("UPDATE `characters` SET `rafRewarded` = 1 WHERE `guid` = %i", player->GetGUID().GetCounter());
             }
         }
 
@@ -352,8 +352,8 @@ class ReferAFriendWorld : public WorldScript
 
                 if (currentTime > timeDelay)
                 {
-                    LoginDatabase.DirectPExecute("UPDATE `account` SET `recruiter` = 0 WHERE `id` IN (SELECT `account_id` FROM `mod_referafriend` WHERE `referral_date` < NOW() - INTERVAL %i DAY AND status = 2)", duration);
-                    LoginDatabase.DirectPExecute("UPDATE `mod_referafriend` SET `status` = 3 WHERE `referral_date` < NOW() - INTERVAL %i DAY AND `status` = 2", duration);
+                    QueryResult result = LoginDatabase.PQuery("UPDATE `account` SET `recruiter` = 0 WHERE `id` IN (SELECT `account_id` FROM `mod_referafriend` WHERE `referral_date` < NOW() - INTERVAL %i DAY AND status = 2)", duration);
+                    result = LoginDatabase.PQuery("UPDATE `mod_referafriend` SET `status` = 3 WHERE `referral_date` < NOW() - INTERVAL %i DAY AND `status` = 2", duration);
 
                     currentTime = 0s;
                 }
