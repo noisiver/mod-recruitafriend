@@ -47,9 +47,9 @@ class ReferAFriendCommand : public CommandScript
                 uint32 accountId = fields[0].GetUInt32();
                 uint32 referrerId = fields[1].GetUInt32();
 
-                LoginDatabase.DirectPExecute("DELETE FROM `mod_referafriend` WHERE `account_id` = %i AND `status` = 1", accountId);
-                LoginDatabase.DirectPExecute("UPDATE `account` SET `recruiter` = %i WHERE `account_id` = %i", referrerId, accountId);
-                LoginDatabase.DirectPExecute("INSERT INTO `mod_referafriend` (`account_id`, `referrer_id`, `status`) VALUES (%i, %i, 2)", accountId, referrerId);
+                result = LoginDatabase.PQuery("DELETE FROM `mod_referafriend` WHERE `account_id` = %i AND `status` = 1", accountId);
+                result = LoginDatabase.PQuery("UPDATE `account` SET `recruiter` = %i WHERE `account_id` = %i", referrerId, accountId);
+                result = LoginDatabase.PQuery("INSERT INTO `mod_referafriend` (`account_id`, `referrer_id`, `status`) VALUES (%i, %i, 2)", accountId, referrerId);
                 ChatHandler(handler->GetSession()).SendSysMessage("You have |cff4CFF00accepted|r the referral request.");
                 ChatHandler(handler->GetSession()).SendSysMessage("You have to log out and back in for the changes to take effect.");
                 return true;
@@ -66,7 +66,7 @@ class ReferAFriendCommand : public CommandScript
             QueryResult result = LoginDatabase.PQuery("SELECT `account_id` FROM `mod_referafriend` WHERE `account_id` = %i AND `status` = 1", referralAccountId);
             if (result)
             {
-                LoginDatabase.DirectPExecute("DELETE FROM `mod_referafriend` WHERE `account_id` = %i AND `status` = 1", referralAccountId);
+                result = LoginDatabase.PQuery("DELETE FROM `mod_referafriend` WHERE `account_id` = %i AND `status` = 1", referralAccountId);
                 ChatHandler(handler->GetSession()).SendSysMessage("You have |cffFF0000declined|r the referral request.");
                 return true;
             }
@@ -124,7 +124,7 @@ class ReferAFriendCommand : public CommandScript
                 return true;
             }
 
-            LoginDatabase.DirectPExecute("INSERT INTO `mod_referafriend` (`account_id`, `referrer_id`, `status`) VALUES (%i, %i, 1)", referralAccountId, referrerAccountId);
+            QueryResult result = LoginDatabase.PQuery("INSERT INTO `mod_referafriend` (`account_id`, `referrer_id`, `status`) VALUES (%i, %i, 1)", referralAccountId, referrerAccountId);
             ChatHandler(handler->GetSession()).PSendSysMessage("You have sent a referral request to |cff4CFF00%s|r.", target->GetConnectedPlayer()->GetName());
             ChatHandler(handler->GetSession()).SendSysMessage("The player has to |cff4CFF00accept|r, or |cff4CFF00decline|r, the pending request.");
             ChatHandler(handler->GetSession()).SendSysMessage("If they accept the request, you have to log out and back in for the changes to take effect.");
@@ -266,7 +266,7 @@ class ReferAFriendPlayer : public PlayerScript
                 if (rewardTouringRocket)
                     SendMailTo(player, "X-53 Touring Rocket", "This rocket was found flying around Northrend, with what seemed like no purpose. Perhaps you could put it to good use?", 54860, 1);
 
-                LoginDatabase.DirectPExecute("UPDATE `characters` SET `rafRewarded` = 1 WHERE `guid` = %i", player->GetGUID().GetCounter());
+                QueryResult result = LoginDatabase.PQuery("UPDATE `characters` SET `rafRewarded` = 1 WHERE `guid` = %i", player->GetGUID().GetCounter());
             }
         }
 
@@ -341,7 +341,7 @@ class ReferAFriendWorld : public WorldScript
 
         void OnStartup() override
         {
-            LoginDatabase.DirectPExecute("DELETE FROM `mod_referafriend` WHERE `status` = 1");
+            QueryResult result = LoginDatabase.Query("DELETE FROM `mod_referafriend` WHERE `status` = 1");
         }
 
         void OnUpdate(uint32 diff) override
@@ -352,8 +352,8 @@ class ReferAFriendWorld : public WorldScript
 
                 if (currentTime > timeDelay)
                 {
-                    LoginDatabase.DirectPExecute("UPDATE `account` SET `recruiter` = 0 WHERE `id` IN (SELECT `account_id` FROM `mod_referafriend` WHERE `referral_date` < NOW() - INTERVAL %i DAY AND status = 2)", duration);
-                    LoginDatabase.DirectPExecute("UPDATE `mod_referafriend` SET `status` = 3 WHERE `referral_date` < NOW() - INTERVAL %i DAY AND `status` = 2", duration);
+                    QueryResult result = LoginDatabase.PQuery("UPDATE `account` SET `recruiter` = 0 WHERE `id` IN (SELECT `account_id` FROM `mod_referafriend` WHERE `referral_date` < NOW() - INTERVAL %i DAY AND status = 2)", duration);
+                    result = LoginDatabase.PQuery("UPDATE `mod_referafriend` SET `status` = 3 WHERE `referral_date` < NOW() - INTERVAL %i DAY AND `status` = 2", duration);
 
                     currentTime = 0s;
                 }
