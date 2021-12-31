@@ -35,7 +35,7 @@ class RecruitAFriendCommand : public CommandScript
             return commandTable;
         }
 
-        static bool HandleRecruitAcceptCommand(ChatHandler* handler, Optional<PlayerIdentifier> target)
+        static bool HandleRecruitAcceptCommand(ChatHandler* handler)
         {
             uint32 recruitedAccountId = handler->GetSession()->GetAccountId();
 
