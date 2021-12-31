@@ -218,7 +218,7 @@ class RecruitAFriendCommand : public CommandScript
             return status;
         }
 
-        static int WhoRecruited(uint32 accountId)
+        static uint32 WhoRecruited(uint32 accountId)
         {
             QueryResult result = LoginDatabase.PQuery("SELECT `recruiter` FROM `mod_recruitafriend` WHERE `id` = %i", accountId);
 
