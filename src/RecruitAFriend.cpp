@@ -266,7 +266,7 @@ class RecruitAFriendPlayer : public PlayerScript
                 if (rewardTouringRocket)
                     SendMailTo(player, "X-53 Touring Rocket", "This rocket was found flying around Northrend, with what seemed like no purpose. Perhaps you could put it to good use?", 54860, 1);
 
-                QueryResult result = LoginDatabase.PQuery("UPDATE `characters` SET `rafRewarded` = 1 WHERE `guid` = %i", player->GetGUID().GetCounter());
+                QueryResult result = CharacterDatabase.PQuery("UPDATE `characters` SET `rafRewarded` = 1 WHERE `guid` = %i", player->GetGUID().GetCounter());
             }
         }
 
