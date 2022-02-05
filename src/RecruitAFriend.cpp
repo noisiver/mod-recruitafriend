@@ -39,17 +39,17 @@ class RecruitAFriendCommand : public CommandScript
         {
             uint32 recruitedAccountId = handler->GetSession()->GetAccountId();
 
-            QueryResult result = LoginDatabase.PQuery("SELECT `id`, `recruiter` FROM `mod_recruitafriend` WHERE `id` = %i AND `status` = 1", recruitedAccountId);
+            QueryResult result = LoginDatabase.Query("SELECT `id`, `recruiter` FROM `mod_recruitafriend` WHERE `id` = {} AND `status` = 1", recruitedAccountId);
             if (result)
             {
                 Field* fields = result->Fetch();
-                std::string referralDate = fields[0].GetString();
-                uint32 accountId = fields[0].GetUInt32();
-                uint32 recruiterId = fields[1].GetUInt32();
+                std::string referralDate = fields[0].Get<std::string>();
+                uint32 accountId = fields[0].Get<uint32>();
+                uint32 recruiterId = fields[1].Get<uint32>();
 
-                result = LoginDatabase.PQuery("DELETE FROM `mod_recruitafriend` WHERE `id` = %i AND `status` = 1", accountId);
-                result = LoginDatabase.PQuery("UPDATE `account` SET `recruiter` = %i WHERE `id` = %i", recruiterId, accountId);
-                result = LoginDatabase.PQuery("INSERT INTO `mod_recruitafriend` (`id`, `recruiter`, `status`) VALUES (%i, %i, 2)", accountId, recruiterId);
+                result = LoginDatabase.Query("DELETE FROM `mod_recruitafriend` WHERE `id` = {] AND `status` = 1", accountId);
+                result = LoginDatabase.Query("UPDATE `account` SET `recruiter` = {} WHERE `id` = {}", recruiterId, accountId);
+                result = LoginDatabase.Query("INSERT INTO `mod_recruitafriend` (`id`, `recruiter`, `status`) VALUES ({}, {}, 2)", accountId, recruiterId);
                 ChatHandler(handler->GetSession()).SendSysMessage("You have |cff4CFF00accepted|r the referral request.");
                 ChatHandler(handler->GetSession()).SendSysMessage("You have to log out and back in for the changes to take effect.");
                 return true;
@@ -63,10 +63,10 @@ class RecruitAFriendCommand : public CommandScript
         {
             uint32 recruitedAccountId = handler->GetSession()->GetAccountId();
 
-            QueryResult result = LoginDatabase.PQuery("SELECT `id` FROM `mod_recruitafriend` WHERE `id` = %i AND `status` = 1", recruitedAccountId);
+            QueryResult result = LoginDatabase.Query("SELECT `id` FROM `mod_recruitafriend` WHERE `id` = {} AND `status` = 1", recruitedAccountId);
             if (result)
             {
-                result = LoginDatabase.PQuery("DELETE FROM `mod_recruitafriend` WHERE `id` = %i AND `status` = 1", recruitedAccountId);
+                result = LoginDatabase.Query("DELETE FROM `mod_recruitafriend` WHERE `id` = {} AND `status` = 1", recruitedAccountId);
                 ChatHandler(handler->GetSession()).SendSysMessage("You have |cffFF0000declined|r the referral request.");
                 return true;
             }
@@ -124,7 +124,7 @@ class RecruitAFriendCommand : public CommandScript
                 return true;
             }
 
-            QueryResult result = LoginDatabase.PQuery("INSERT INTO `mod_recruitafriend` (`id`, `recruiter`, `status`) VALUES (%i, %i, 1)", recruitedAccountId, recruiterAccountId);
+            QueryResult result = LoginDatabase.Query("INSERT INTO `mod_recruitafriend` (`id`, `recruiter`, `status`) VALUES ({}, {}, 1)", recruitedAccountId, recruiterAccountId);
             ChatHandler(handler->GetSession()).PSendSysMessage("You have sent a referral request to |cff4CFF00%s|r.", target->GetConnectedPlayer()->GetName());
             ChatHandler(handler->GetSession()).SendSysMessage("The player has to |cff4CFF00accept|r, or |cff4CFF00decline|r, the pending request.");
             ChatHandler(handler->GetSession()).SendSysMessage("If they accept the request, you have to log out and back in for the changes to take effect.");
@@ -158,13 +158,13 @@ class RecruitAFriendCommand : public CommandScript
         {
             uint32 accountId = handler->GetSession()->GetAccountId();
 
-            QueryResult result = LoginDatabase.PQuery("SELECT `referral_date`, `referral_date` + INTERVAL %i DAY, `status` FROM `mod_recruitafriend` WHERE `id` = %i", duration, accountId);
+            QueryResult result = LoginDatabase.Query("SELECT `referral_date`, `referral_date` + INTERVAL {} DAY, `status` FROM `mod_recruitafriend` WHERE `id` = {}", duration, accountId);
             if (result)
             {
                 Field* fields = result->Fetch();
-                std::string referralDate = fields[0].GetString();
-                std::string expirationDate = fields[1].GetString();
-                uint8 status = fields[2].GetUInt8();
+                std::string referralDate = fields[0].Get<std::string>();
+                std::string expirationDate = fields[1].Get<std::string>();
+                uint8 status = fields[2].Get<int8>();
 
                 if (status == 3)
                 {
@@ -197,7 +197,7 @@ class RecruitAFriendCommand : public CommandScript
     private:
         static bool IsReferralValid(uint32 accountId)
         {
-            QueryResult result = LoginDatabase.PQuery("SELECT * FROM `account` WHERE `id` = %i AND `joindate` > NOW() - INTERVAL %i DAY", accountId, age);
+            QueryResult result = LoginDatabase.Query("SELECT * FROM `account` WHERE `id` = %i AND `joindate` > NOW() - INTERVAL {} DAY", accountId, age);
 
             if (!result)
                 return false;
@@ -207,33 +207,33 @@ class RecruitAFriendCommand : public CommandScript
 
         static int ReferralStatus(uint32 accountId)
         {
-            QueryResult result = LoginDatabase.PQuery("SELECT `status` FROM `mod_recruitafriend` WHERE `id` = %i", accountId);
+            QueryResult result = LoginDatabase.Query("SELECT `status` FROM `mod_recruitafriend` WHERE `id` = {}", accountId);
 
             if (!result)
                 return 0;
 
             Field* fields = result->Fetch();
-            uint32 status = fields[0].GetUInt32();
+            uint32 status = fields[0].Get<uint32>();
 
             return status;
         }
 
         static uint32 WhoRecruited(uint32 accountId)
         {
-            QueryResult result = LoginDatabase.PQuery("SELECT `recruiter` FROM `mod_recruitafriend` WHERE `id` = %i", accountId);
+            QueryResult result = LoginDatabase.Query("SELECT `recruiter` FROM `mod_recruitafriend` WHERE `id` = {}", accountId);
 
             if (!result)
                 return 0;
 
             Field* fields = result->Fetch();
-            uint32 referrerAccountId = fields[0].GetUInt32();
+            uint32 referrerAccountId = fields[0].Get<uint32>();
 
             return referrerAccountId;
         }
 
         static bool IsReferralPending(uint32 accountId)
         {
-            QueryResult result = LoginDatabase.PQuery("SELECT `id` FROM `mod_recruitafriend` WHERE `id` = %i AND `status` = 1", accountId);
+            QueryResult result = LoginDatabase.Query("SELECT `id` FROM `mod_recruitafriend` WHERE `id` = {} AND `status` = 1", accountId);
 
             if (!result)
                 return false;
@@ -266,14 +266,14 @@ class RecruitAFriendPlayer : public PlayerScript
                 if (rewardTouringRocket)
                     SendMailTo(player, "X-53 Touring Rocket", "This rocket was found flying around Northrend, with what seemed like no purpose. Perhaps you could put it to good use?", 54860, 1);
 
-                QueryResult result = CharacterDatabase.PQuery("UPDATE `characters` SET `rafRewarded` = 1 WHERE `guid` = %i", player->GetGUID().GetCounter());
+                QueryResult result = CharacterDatabase.Query("UPDATE `characters` SET `rafRewarded` = 1 WHERE `guid` = {}", player->GetGUID().GetCounter());
             }
         }
 
     private:
         bool IsEligible(uint32 accountId)
         {
-            QueryResult result = LoginDatabase.PQuery("SELECT * FROM `mod_recruitafriend` WHERE `referral_date` < NOW() - INTERVAL %i DAY AND (`id` = %i OR `recruiter` = %i) AND `status` NOT LIKE 1", rewardDays, accountId, accountId);
+            QueryResult result = LoginDatabase.Query("SELECT * FROM `mod_recruitafriend` WHERE `referral_date` < NOW() - INTERVAL {} DAY AND (`id` = {} OR `recruiter` = {}) AND `status` NOT LIKE 1", rewardDays, accountId, accountId);
 
             if (!result)
                 return false;
@@ -283,13 +283,13 @@ class RecruitAFriendPlayer : public PlayerScript
 
         bool IsRewarded(uint32 characterGuid)
         {
-            QueryResult result = CharacterDatabase.PQuery("SELECT `rafRewarded` FROM `characters` WHERE `guid` = %i", characterGuid);
+            QueryResult result = CharacterDatabase.Query("SELECT `rafRewarded` FROM `characters` WHERE `guid` = {}", characterGuid);
 
             if (!result)
                 return true;
 
             Field* fields = result->Fetch();
-            uint8 rewarded = fields[0].GetInt8();
+            uint8 rewarded = fields[0].Get<int8>();
 
             if (rewarded != 0)
                 return true;
@@ -352,8 +352,8 @@ class RecruitAFriendWorld : public WorldScript
 
                 if (currentTime > timeDelay)
                 {
-                    QueryResult result = LoginDatabase.PQuery("UPDATE `account` SET `recruiter` = 0 WHERE `id` IN (SELECT `id` FROM `mod_recruitafriend` WHERE `referral_date` < NOW() - INTERVAL %i DAY AND status = 2)", duration);
-                    result = LoginDatabase.PQuery("UPDATE `mod_recruitafriend` SET `status` = 3 WHERE `referral_date` < NOW() - INTERVAL %i DAY AND `status` = 2", duration);
+                    QueryResult result = LoginDatabase.Query("UPDATE `account` SET `recruiter` = 0 WHERE `id` IN (SELECT `id` FROM `mod_recruitafriend` WHERE `referral_date` < NOW() - INTERVAL {} DAY AND status = 2)", duration);
+                    result = LoginDatabase.Query("UPDATE `mod_recruitafriend` SET `status` = 3 WHERE `referral_date` < NOW() - INTERVAL {} DAY AND `status` = 2", duration);
 
                     currentTime = 0s;
                 }
