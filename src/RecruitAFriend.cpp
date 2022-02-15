@@ -47,7 +47,7 @@ class RecruitAFriendCommand : public CommandScript
                 uint32 accountId = fields[0].Get<uint32>();
                 uint32 recruiterId = fields[1].Get<uint32>();
 
-                result = LoginDatabase.Query("DELETE FROM `mod_recruitafriend` WHERE `id` = {] AND `status` = 1", accountId);
+                result = LoginDatabase.Query("DELETE FROM `mod_recruitafriend` WHERE `id` = {} AND `status` = 1", accountId);
                 result = LoginDatabase.Query("UPDATE `account` SET `recruiter` = {} WHERE `id` = {}", recruiterId, accountId);
                 result = LoginDatabase.Query("INSERT INTO `mod_recruitafriend` (`id`, `recruiter`, `status`) VALUES ({}, {}, 2)", accountId, recruiterId);
                 ChatHandler(handler->GetSession()).SendSysMessage("You have |cff4CFF00accepted|r the referral request.");
