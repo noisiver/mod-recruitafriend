@@ -108,28 +108,28 @@ class RecruitAFriendCommand : public CommandScript
 
             if (WhoRecruited(recruiterAccountId) == recruitedAccountId)
             {
-                ChatHandler(handler->GetSession()).PSendSysMessage("You can't recruit |cff4CFF00%s|r because they referred you.", target->GetConnectedPlayer()->GetName());
+                ChatHandler(handler->GetSession()).PSendSysMessage("You can't recruit |cff4CFF00{}|r because they referred you.", target->GetConnectedPlayer()->GetName());
                 return true;
             }
 
             if (!IsReferralValid(recruitedAccountId) && age > 0)
             {
-                ChatHandler(handler->GetSession()).PSendSysMessage("You can't recruit |cffFF0000%s|r because their account was created more than %i days ago.", target->GetConnectedPlayer()->GetName(), age);
+                ChatHandler(handler->GetSession()).PSendSysMessage("You can't recruit |cffFF0000{}|r because their account was created more than {} days ago.", target->GetConnectedPlayer()->GetName(), age);
                 return true;
             }
 
             if (IsReferralPending(recruitedAccountId))
             {
-                ChatHandler(handler->GetSession()).PSendSysMessage("You can't recruit |cffFF0000%s|r because they already have a pending request.", target->GetConnectedPlayer()->GetName());
+                ChatHandler(handler->GetSession()).PSendSysMessage("You can't recruit |cffFF0000{}|r because they already have a pending request.", target->GetConnectedPlayer()->GetName());
                 return true;
             }
 
             QueryResult result = LoginDatabase.Query("INSERT INTO `mod_recruitafriend` (`id`, `recruiter`, `status`) VALUES ({}, {}, 1)", recruitedAccountId, recruiterAccountId);
-            ChatHandler(handler->GetSession()).PSendSysMessage("You have sent a referral request to |cff4CFF00%s|r.", target->GetConnectedPlayer()->GetName());
+            ChatHandler(handler->GetSession()).PSendSysMessage("You have sent a referral request to |cff4CFF00{}|r.", target->GetConnectedPlayer()->GetName());
             ChatHandler(handler->GetSession()).SendSysMessage("The player has to |cff4CFF00accept|r, or |cff4CFF00decline|r, the pending request.");
             ChatHandler(handler->GetSession()).SendSysMessage("If they accept the request, you have to log out and back in for the changes to take effect.");
 
-            ChatHandler(target->GetConnectedPlayer()->GetSession()).PSendSysMessage("|cff4CFF00%s|r has sent you a referral request.", handler->GetPlayer()->GetName());
+            ChatHandler(target->GetConnectedPlayer()->GetSession()).PSendSysMessage("|cff4CFF00{}|r has sent you a referral request.", handler->GetPlayer()->GetName());
             ChatHandler(target->GetConnectedPlayer()->GetSession()).SendSysMessage("Use |cff4CFF00.recruit accept|r to accept or |cff4CFF00.recruit decline|r to decline the request.");
             return true;
         }
@@ -139,11 +139,11 @@ class RecruitAFriendCommand : public CommandScript
             ChatHandler(handler->GetSession()).SendSysMessage("You can recruit a friend using |cff4CFF00.recruit friend <name>|r.");
             ChatHandler(handler->GetSession()).SendSysMessage("You can accept a pending request using |cff4CFF00.recruit accept|r.");
             ChatHandler(handler->GetSession()).SendSysMessage("You can decline a pending request using |cff4CFF00.recruit decline|r.");
-            ChatHandler(handler->GetSession()).PSendSysMessage("You will both receive a bonus to experience and reputation up to level %i.", sWorld->getIntConfig(CONFIG_MAX_RECRUIT_A_FRIEND_BONUS_PLAYER_LEVEL));
+            ChatHandler(handler->GetSession()).PSendSysMessage("You will both receive a bonus to experience and reputation up to level {}.", sWorld->getIntConfig(CONFIG_MAX_RECRUIT_A_FRIEND_BONUS_PLAYER_LEVEL));
 
             if (duration > 0)
             {
-                ChatHandler(handler->GetSession()).PSendSysMessage("The recruit a friend benefits will expire after %i days.", duration);
+                ChatHandler(handler->GetSession()).PSendSysMessage("The recruit a friend benefits will expire after {} days.", duration);
             }
             else
             {
@@ -168,7 +168,7 @@ class RecruitAFriendCommand : public CommandScript
 
                 if (status == 3)
                 {
-                    ChatHandler(handler->GetSession()).PSendSysMessage("You were recruited at |cff4CFF00%s|r and it expired at |cffFF0000%s|r.", referralDate, expirationDate);
+                    ChatHandler(handler->GetSession()).PSendSysMessage("You were recruited at |cff4CFF00{}|r and it expired at |cffFF0000{}|r.", referralDate, expirationDate);
                 }
                 else if (status == 2)
                 {
@@ -178,11 +178,11 @@ class RecruitAFriendCommand : public CommandScript
                 {
                     if (duration > 0)
                     {
-                        ChatHandler(handler->GetSession()).PSendSysMessage("You were recruited at |cff4CFF00%s|r and it will expire at |cffFF0000%s|r.", referralDate, expirationDate);
+                        ChatHandler(handler->GetSession()).PSendSysMessage("You were recruited at |cff4CFF00{}|r and it will expire at |cffFF0000{}|r.", referralDate, expirationDate);
                     }
                     else
                     {
-                        ChatHandler(handler->GetSession()).PSendSysMessage("You were recruited at |cff4CFF00%s|r and it will |cffFF0000never|r expire.", referralDate, expirationDate);
+                        ChatHandler(handler->GetSession()).PSendSysMessage("You were recruited at |cff4CFF00{}|r and it will |cffFF0000never|r expire.", referralDate, expirationDate);
                     }
                 }
             }
@@ -197,7 +197,7 @@ class RecruitAFriendCommand : public CommandScript
     private:
         static bool IsReferralValid(uint32 accountId)
         {
-            QueryResult result = LoginDatabase.Query("SELECT * FROM `account` WHERE `id` = %i AND `joindate` > NOW() - INTERVAL {} DAY", accountId, age);
+            QueryResult result = LoginDatabase.Query("SELECT * FROM `account` WHERE `id` = {} AND `joindate` > NOW() - INTERVAL {} DAY", accountId, age);
 
             if (!result)
                 return false;
