@@ -166,15 +166,11 @@ class RecruitAFriendCommand : public CommandScript
                 std::string expirationDate = fields[1].Get<std::string>();
                 uint8 status = fields[2].Get<int8>();
 
-                if (status == 2)
+                if (status == 3)
                 {
                     ChatHandler(handler->GetSession()).PSendSysMessage("You were recruited at |cff4CFF00%s|r and it expired at |cffFF0000%s|r.", referralDate, expirationDate);
                 }
-                else if (status == 3)
-                {
-                    ChatHandler(handler->GetSession()).SendSysMessage("You have not been recruited but have a |cff4CFF00pending|r request.");
-                }
-                else
+                else if (status == 2)
                 {
                     if (duration > 0)
                     {
@@ -184,6 +180,10 @@ class RecruitAFriendCommand : public CommandScript
                     {
                         ChatHandler(handler->GetSession()).PSendSysMessage("You were recruited at |cff4CFF00%s|r and it will |cffFF0000never|r expire.", referralDate, expirationDate);
                     }
+                }
+                else
+                {
+                    ChatHandler(handler->GetSession()).SendSysMessage("You have not been recruited but have a |cff4CFF00pending|r request.");
                 }
             }
             else
