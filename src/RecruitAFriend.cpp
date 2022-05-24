@@ -10,6 +10,7 @@ uint32 age;
 uint32 rewardDays;
 bool rewardSwiftZhevra;
 bool rewardTouringRocket;
+bool rewardCelestialSteed;
 
 class RecruitAFriendCommand : public CommandScript
 {
@@ -266,6 +267,9 @@ class RecruitAFriendPlayer : public PlayerScript
                 if (rewardTouringRocket)
                     SendMailTo(player, "X-53 Touring Rocket", "This rocket was found flying around Northrend, with what seemed like no purpose. Perhaps you could put it to good use?", 54860, 1);
 
+                if (rewardCelestialSteed)
+                    SendMailTo(player, "Celestial Steed", "A strange steed was found roaming Northrend, phasing in and out of existence. I figured you would be interested in such a companion.", 54811, 1);
+
                 QueryResult result = CharacterDatabase.Query("UPDATE `characters` SET `rafRewarded` = 1 WHERE `guid` = {}", player->GetGUID().GetCounter());
             }
         }
@@ -337,6 +341,7 @@ class RecruitAFriendWorld : public WorldScript
             rewardDays = sConfigMgr->GetOption<int32>("RecruitAFriend.Rewards.Days", 30);
             rewardSwiftZhevra = sConfigMgr->GetOption<bool>("RecruitAFriend.Rewards.SwiftZhevra", 1);
             rewardTouringRocket = sConfigMgr->GetOption<bool>("RecruitAFriend.Rewards.TouringRocket", 1);
+            rewardCelestialSteed = sConfigMgr->GetOption<bool>("RecruitAFriend.Rewards.CelestialSteed", 1);
         }
 
         void OnStartup() override

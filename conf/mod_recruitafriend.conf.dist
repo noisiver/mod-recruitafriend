@@ -27,3 +27,8 @@ RecruitAFriend.Rewards.SwiftZhevra = 1
 # This setting gives the players the X-53 Touring Rocket item
 RecruitAFriend.Rewards.TouringRocket = 1
 ###
+
+###
+# This setting gives the players the Celestial Steed item
+RecruitAFriend.Rewards.CelestialSteed = 1
+###
