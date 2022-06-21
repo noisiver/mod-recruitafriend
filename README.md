@@ -1,6 +1,10 @@
 # Recruit-A-Friend
 This is a module for [AzerothCore](https://github.com/azerothcore/azerothcore-wotlk).
 
+This module has been ported to LUA, used by installing the [Eluna](https://github.com/azerothcore/mod-eluna) module, and will not receive any new features.
+
+The LUA script can be found at [Recruit-A-Friend](https://github.com/tkn963/lua-recruitafriend).
+
 # Features
 This module adds five new in-game commands that allows players to recruit each other.
 
