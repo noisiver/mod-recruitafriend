@@ -332,7 +332,7 @@ public:
     void OnAfterConfigLoad(bool /*reload*/) override
     {
         duration = sConfigMgr->GetOption<int32>("RecruitAFriend.Duration", 90);
-        age = sConfigMgr->GetOption<int32>("RecruitAFriend.AccountAge", 7);
+        age = sConfigMgr->GetOption<int32>("RecruitAFriend.MaxAccountAge", 7);
         rewardDays = sConfigMgr->GetOption<int32>("RecruitAFriend.Rewards.Days", 30);
         rewardSwiftZhevra = sConfigMgr->GetOption<bool>("RecruitAFriend.Rewards.SwiftZhevra", 1);
         rewardTouringRocket = sConfigMgr->GetOption<bool>("RecruitAFriend.Rewards.TouringRocket", 1);

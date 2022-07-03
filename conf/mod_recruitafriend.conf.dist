@@ -9,7 +9,7 @@ RecruitAFriend.Duration = 90
 ###
 # The amount of days since the account was created where it can still be recruited. Accounts older than this amount of days will not be able to be recruited
 # A value of 0 will allow any account to be recruited
-RecruitAFriend.AccountAge = 7
+RecruitAFriend.MaxAccountAge = 7
 ###
 
 ###
