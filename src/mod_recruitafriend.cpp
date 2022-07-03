@@ -5,13 +5,13 @@
 
 using namespace Acore::ChatCommands;
 
-uint32 duration;
-uint32 age;
-uint32 rewardDays;
-bool rewardSwiftZhevra;
-bool rewardTouringRocket;
-bool rewardCelestialSteed;
-uint32 realmId;
+uint32 rafDuration;
+uint32 rafAge;
+uint32 rafRewardDays;
+bool rafRewardSwiftZhevra;
+bool rafRewardTouringRocket;
+bool rafRewardCelestialSteed;
+uint32 rafRealmId;
 
 class RecruitAFriendCommand : public CommandScript
 {
@@ -120,9 +120,9 @@ public:
             return true;
         }
 
-        if (!IsReferralValid(recruitedAccountId) && age > 0)
+        if (!IsReferralValid(recruitedAccountId) && rafAge > 0)
         {
-            ChatHandler(handler->GetSession()).PSendSysMessage("You can't recruit |cffFF0000%s|r because their account was created more than %i days ago.", target->GetConnectedPlayer()->GetName(), age);
+            ChatHandler(handler->GetSession()).PSendSysMessage("You can't recruit |cffFF0000%s|r because their account was created more than %i days ago.", target->GetConnectedPlayer()->GetName(), rafAge);
             return true;
         }
 
@@ -149,9 +149,9 @@ public:
         ChatHandler(handler->GetSession()).SendSysMessage("You can decline a pending request using |cff4CFF00.recruit decline|r.");
         ChatHandler(handler->GetSession()).PSendSysMessage("You will both receive a bonus to experience and reputation up to level %i.", sWorld->getIntConfig(CONFIG_MAX_RECRUIT_A_FRIEND_BONUS_PLAYER_LEVEL));
 
-        if (duration > 0)
+        if (rafDuration > 0)
         {
-            ChatHandler(handler->GetSession()).PSendSysMessage("The recruit a friend benefits will expire after %i days.", duration);
+            ChatHandler(handler->GetSession()).PSendSysMessage("The recruit a friend benefits will expire after %i days.", rafDuration);
         }
         else
         {
@@ -166,7 +166,7 @@ public:
     {
         uint32 accountId = handler->GetSession()->GetAccountId();
 
-        QueryResult result = LoginDatabase.Query("SELECT `referral_date`, `referral_date` + INTERVAL {} DAY, `status` FROM `recruit_a_friend_accounts` WHERE `account_id` = {}", duration, accountId);
+        QueryResult result = LoginDatabase.Query("SELECT `referral_date`, `referral_date` + INTERVAL {} DAY, `status` FROM `recruit_a_friend_accounts` WHERE `account_id` = {}", rafDuration, accountId);
         if (result)
         {
             Field* fields = result->Fetch();
@@ -180,7 +180,7 @@ public:
             }
             else if (status == 2)
             {
-                if (duration > 0)
+                if (rafDuration > 0)
                 {
                     ChatHandler(handler->GetSession()).PSendSysMessage("You were recruited at |cff4CFF00%s|r and it will expire at |cffFF0000%s|r.", referralDate, expirationDate);
                 }
@@ -205,7 +205,7 @@ public:
 private:
     static bool IsReferralValid(uint32 accountId)
     {
-        QueryResult result = LoginDatabase.Query("SELECT * FROM `account` WHERE `id` = {} AND `joindate` > NOW() - INTERVAL {} DAY", accountId, age);
+        QueryResult result = LoginDatabase.Query("SELECT * FROM `account` WHERE `id` = {} AND `joindate` > NOW() - INTERVAL {} DAY", accountId, rafAge);
 
         if (!result)
             return false;
@@ -260,32 +260,32 @@ public:
         ChatHandler(player->GetSession()).PSendSysMessage("This server allows the use of the recruit a friend feature.");
         ChatHandler(player->GetSession()).PSendSysMessage("Use the command |cff4CFF00.recruit help|r to get started.");
 
-        if (rewardDays > 0)
+        if (rafRewardDays > 0)
         {
-            if (!IsEligible(player->GetSession()->GetAccountId()) && duration > 0)
+            if (!IsEligible(player->GetSession()->GetAccountId()) && rafDuration > 0)
                 return;
 
             if (IsRewarded(player))
                 return;
 
-            if (rewardSwiftZhevra)
+            if (rafRewardSwiftZhevra)
                 SendMailTo(player, "Swift Zhevra", "I found this stray Zhevra walking around The Barrens, aimlessly. I figured you, if anyone, could give it a good home!", 37719, 1);
 
-            if (rewardTouringRocket)
+            if (rafRewardTouringRocket)
                 SendMailTo(player, "X-53 Touring Rocket", "This rocket was found flying around Northrend, with what seemed like no purpose. Perhaps you could put it to good use?", 54860, 1);
 
-            if (rewardCelestialSteed)
+            if (rafRewardCelestialSteed)
                 SendMailTo(player, "Celestial Steed", "A strange steed was found roaming Northrend, phasing in and out of existence. I figured you would be interested in such a companion.", 54811, 1);
 
 
-            QueryResult result = LoginDatabase.Query("INSERT INTO `recruit_a_friend_rewarded` (`account_id`, `realm_id`, `character_guid`) VALUES ({}, {}, {})", player->GetSession()->GetAccountId(), realmId, player->GetGUID().GetCounter());
+            QueryResult result = LoginDatabase.Query("INSERT INTO `recruit_a_friend_rewarded` (`account_id`, `realm_id`, `character_guid`) VALUES ({}, {}, {})", player->GetSession()->GetAccountId(), rafRealmId, player->GetGUID().GetCounter());
         }
     }
 
 private:
     bool IsEligible(uint32 accountId)
     {
-        QueryResult result = LoginDatabase.Query("SELECT * FROM `recruit_a_friend_accounts` WHERE `referral_date` < NOW() - INTERVAL {} DAY AND (`account_id` = {} OR `recruiter_id` = {}) AND `status` NOT LIKE 1", rewardDays, accountId, accountId);
+        QueryResult result = LoginDatabase.Query("SELECT * FROM `recruit_a_friend_accounts` WHERE `referral_date` < NOW() - INTERVAL {} DAY AND (`account_id` = {} OR `recruiter_id` = {}) AND `status` NOT LIKE 1", rafRewardDays, accountId, accountId);
 
         if (!result)
             return false;
@@ -295,7 +295,7 @@ private:
 
     bool IsRewarded(Player* player)
     {
-        QueryResult result = LoginDatabase.Query("SELECT * FROM `recruit_a_friend_rewarded` WHERE `account_id` = {} AND `realm_id` = {} AND `character_guid` = {}", player->GetSession()->GetAccountId(), realmId, player->GetGUID().GetCounter());
+        QueryResult result = LoginDatabase.Query("SELECT * FROM `recruit_a_friend_rewarded` WHERE `account_id` = {} AND `realm_id` = {} AND `character_guid` = {}", player->GetSession()->GetAccountId(), rafRealmId, player->GetGUID().GetCounter());
 
         if (result)
             return true;
@@ -337,13 +337,13 @@ public:
 
     void OnAfterConfigLoad(bool /*reload*/) override
     {
-        duration = sConfigMgr->GetOption<int32>("RecruitAFriend.Duration", 90);
-        age = sConfigMgr->GetOption<int32>("RecruitAFriend.MaxAccountAge", 7);
-        rewardDays = sConfigMgr->GetOption<int32>("RecruitAFriend.Rewards.Days", 30);
-        rewardSwiftZhevra = sConfigMgr->GetOption<bool>("RecruitAFriend.Rewards.SwiftZhevra", 1);
-        rewardTouringRocket = sConfigMgr->GetOption<bool>("RecruitAFriend.Rewards.TouringRocket", 1);
-        rewardCelestialSteed = sConfigMgr->GetOption<bool>("RecruitAFriend.Rewards.CelestialSteed", 1);
-        realmId = sConfigMgr->GetOption<uint32>("RealmID", 0);
+        rafDuration = sConfigMgr->GetOption<int32>("RecruitAFriend.Duration", 90);
+        rafAge = sConfigMgr->GetOption<int32>("RecruitAFriend.MaxAccountAge", 7);
+        rafRewardDays = sConfigMgr->GetOption<int32>("RecruitAFriend.Rewards.Days", 30);
+        rafRewardSwiftZhevra = sConfigMgr->GetOption<bool>("RecruitAFriend.Rewards.SwiftZhevra", 1);
+        rafRewardTouringRocket = sConfigMgr->GetOption<bool>("RecruitAFriend.Rewards.TouringRocket", 1);
+        rafRewardCelestialSteed = sConfigMgr->GetOption<bool>("RecruitAFriend.Rewards.CelestialSteed", 1);
+        rafRealmId = sConfigMgr->GetOption<uint32>("RealmID", 0);
     }
 
     void OnStartup() override
@@ -353,14 +353,14 @@ public:
 
     void OnUpdate(uint32 diff) override
     {
-        if (duration > 0)
+        if (rafDuration > 0)
         {
             currentTime += Milliseconds(diff);
 
             if (currentTime > timeDelay)
             {
-                QueryResult result = LoginDatabase.Query("UPDATE `account` SET `recruiter` = 0 WHERE `id` IN (SELECT `account_id` FROM `recruit_a_friend_accounts` WHERE `referral_date` < NOW() - INTERVAL {} DAY AND status = 2)", duration);
-                result = LoginDatabase.Query("UPDATE `recruit_a_friend_accounts` SET `status` = 3 WHERE `referral_date` < NOW() - INTERVAL {} DAY AND `status` = 2", duration);
+                QueryResult result = LoginDatabase.Query("UPDATE `account` SET `recruiter` = 0 WHERE `id` IN (SELECT `account_id` FROM `recruit_a_friend_accounts` WHERE `referral_date` < NOW() - INTERVAL {} DAY AND status = 2)", rafDuration);
+                result = LoginDatabase.Query("UPDATE `recruit_a_friend_accounts` SET `status` = 3 WHERE `referral_date` < NOW() - INTERVAL {} DAY AND `status` = 2", rafDuration);
 
                 currentTime = 0s;
             }
