@@ -359,7 +359,7 @@ public:
 
             if (currentTime > timeDelay)
             {
-                QueryResult result = LoginDatabase.Query("UPDATE `account` SET `recruiter` = 0 WHERE `id` IN (SELECT `id` FROM `recruit_a_friend_accounts` WHERE `referral_date` < NOW() - INTERVAL {} DAY AND status = 2)", duration);
+                QueryResult result = LoginDatabase.Query("UPDATE `account` SET `recruiter` = 0 WHERE `id` IN (SELECT `account_id` FROM `recruit_a_friend_accounts` WHERE `referral_date` < NOW() - INTERVAL {} DAY AND status = 2)", duration);
                 result = LoginDatabase.Query("UPDATE `recruit_a_friend_accounts` SET `status` = 3 WHERE `referral_date` < NOW() - INTERVAL {} DAY AND `status` = 2", duration);
 
                 currentTime = 0s;
