@@ -79,11 +79,17 @@ public:
 
     static bool HandleRecruitFriendCommand(ChatHandler* handler, Optional<PlayerIdentifier> target)
     {
-        if (!target || !target->IsConnected() || target->GetConnectedPlayer()->IsGameMaster())
+        if (!target || !target->IsConnected() || target->GetConnectedPlayer()->GetSession()->GetSecurity() != SEC_PLAYER)
         {
             handler->SendSysMessage(LANG_PLAYER_NOT_FOUND);
             handler->SetSentErrorMessage(true);
             return false;
+        }
+
+        if (handler->GetSession()->GetSecurity() != SEC_PLAYER)
+        {
+            ChatHandler(handler->GetSession()).SendSysMessage("You can't recruit a player because you're a |cffFF0000gamemaster|r!");
+            return true;
         }
 
         uint32 recruiterAccountId = handler->GetSession()->GetAccountId();
