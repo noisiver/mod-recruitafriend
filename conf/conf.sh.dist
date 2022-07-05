@@ -1,4 +1,1 @@
 #!/usr/bin/env bash
-DB_AUTH_CUSTOM_PATHS+=(
-    "$MOD_RECRUITAFRIEND_ROOT/sql/auth/base/"
-)
