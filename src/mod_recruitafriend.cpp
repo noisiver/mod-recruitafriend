@@ -13,7 +13,7 @@ bool rafRewardTouringRocket;
 bool rafRewardCelestialSteed;
 uint32 rafRealmId;
 
-enum ReferallStatus
+enum ReferralStatus
 {
     STATUS_REFERRAL_PENDING = 1,
     STATUS_REFERRAL_ACTIVE  = 2,
