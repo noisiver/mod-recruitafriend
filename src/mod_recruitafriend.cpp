@@ -16,7 +16,7 @@ uint32 rafRealmId;
 enum ReferallStatus
 {
     STATUS_REFERRAL_PENDING = 1,
-    STATUS_REFERRAL_ACTIVE = 2,
+    STATUS_REFERRAL_ACTIVE  = 2,
     STATUS_REFERRAL_EXPIRED = 3
 };
 
@@ -367,7 +367,7 @@ public:
             if (currentTime > timeDelay)
             {
                 QueryResult result = LoginDatabase.Query("UPDATE `account` SET `recruiter` = 0 WHERE `id` IN (SELECT `account_id` FROM `recruit_a_friend_accounts` WHERE `referral_date` < NOW() - INTERVAL {} DAY AND status = {})", rafDuration, STATUS_REFERRAL_ACTIVE);
-                result = LoginDatabase.Query("UPDATE `recruit_a_friend_accounts` SET `status` = {} WHERE `referral_date` < NOW() - INTERVAL {} DAY AND `status` = 2", rafDuration, STATUS_REFERRAL_EXPIRED);
+                result = LoginDatabase.Query("UPDATE `recruit_a_friend_accounts` SET `status` = {} WHERE `referral_date` < NOW() - INTERVAL {} DAY AND `status` = {}", STATUS_REFERRAL_EXPIRED, rafDuration, STATUS_REFERRAL_ACTIVE);
 
                 currentTime = 0s;
             }
