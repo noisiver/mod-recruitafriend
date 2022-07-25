@@ -1,5 +1,5 @@
 # Recruit-A-Friend
-This is a module for [AzerothCore](https://github.com/azerothcore/azerothcore-wotlk).
+[![core-build](https://github.com/tkn963/mod-recruitafriend/workflows/core-build/badge.svg?branch=master&event=push)](https://github.com/tkn963/mod-recruitafriend/actions?query=workflow%3Acore-build+branch%3Amaster+event%3Apush)
 
 # Features
 This module adds five new in-game commands that allows players to recruit each other.
