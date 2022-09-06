@@ -269,7 +269,7 @@ public:
 
         if (rafRewardDays > 0)
         {
-            if (!IsEligible(player->GetSession()->GetAccountId()) && rafDuration > 0)
+            if (!IsEligible(player->GetSession()->GetAccountId()))
                 return;
 
             if (IsRewarded(player))
