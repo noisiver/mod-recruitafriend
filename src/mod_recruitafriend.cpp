@@ -56,9 +56,9 @@ public:
             uint32 accountId = fields[0].Get<uint32>();
             uint32 recruiterId = fields[1].Get<uint32>();
 
-            result = LoginDatabase.Query("DELETE FROM `recruit_a_friend_accounts` WHERE `account_id` = {} AND `status` = {}", accountId, STATUS_REFERRAL_PENDING);
-            result = LoginDatabase.Query("UPDATE `account` SET `recruiter` = {} WHERE `id` = {}", recruiterId, accountId);
-            result = LoginDatabase.Query("INSERT INTO `recruit_a_friend_accounts` (`account_id`, `recruiter_id`, `status`) VALUES ({}, {}, {})", accountId, recruiterId, STATUS_REFERRAL_ACTIVE);
+            LoginDatabase.Execute("DELETE FROM `recruit_a_friend_accounts` WHERE `account_id` = {} AND `status` = {}", accountId, STATUS_REFERRAL_PENDING);
+            LoginDatabase.Execute("UPDATE `account` SET `recruiter` = {} WHERE `id` = {}", recruiterId, accountId);
+            LoginDatabase.Execute("INSERT INTO `recruit_a_friend_accounts` (`account_id`, `recruiter_id`, `status`) VALUES ({}, {}, {})", accountId, recruiterId, STATUS_REFERRAL_ACTIVE);
             ChatHandler(handler->GetSession()).SendSysMessage("You have |cff4CFF00accepted|r the referral request.");
             ChatHandler(handler->GetSession()).SendSysMessage("You have to log out and back in for the changes to take effect.");
             return true;
@@ -75,7 +75,7 @@ public:
         QueryResult result = LoginDatabase.Query("SELECT `account_id` FROM `recruit_a_friend_accounts` WHERE `account_id` = {} AND `status` = {}", recruitedAccountId, STATUS_REFERRAL_PENDING);
         if (result)
         {
-            result = LoginDatabase.Query("DELETE FROM `recruit_a_friend_accounts` WHERE `account_id` = {} AND `status` = {}", recruitedAccountId, STATUS_REFERRAL_PENDING);
+            LoginDatabase.Execute("DELETE FROM `recruit_a_friend_accounts` WHERE `account_id` = {} AND `status` = {}", recruitedAccountId, STATUS_REFERRAL_PENDING);
             ChatHandler(handler->GetSession()).SendSysMessage("You have |cffFF0000declined|r the referral request.");
             return true;
         }
@@ -139,7 +139,7 @@ public:
             return true;
         }
 
-        QueryResult result = LoginDatabase.Query("INSERT INTO `recruit_a_friend_accounts` (`account_id`, `recruiter_id`, `status`) VALUES ({}, {}, {})", recruitedAccountId, recruiterAccountId, STATUS_REFERRAL_PENDING);
+        LoginDatabase.Execute("INSERT INTO `recruit_a_friend_accounts` (`account_id`, `recruiter_id`, `status`) VALUES ({}, {}, {})", recruitedAccountId, recruiterAccountId, STATUS_REFERRAL_PENDING);
         ChatHandler(handler->GetSession()).PSendSysMessage("You have sent a referral request to |cff4CFF00%s|r.", target->GetConnectedPlayer()->GetName());
         ChatHandler(handler->GetSession()).SendSysMessage("The player has to |cff4CFF00accept|r, or |cff4CFF00decline|r, the pending request.");
         ChatHandler(handler->GetSession()).SendSysMessage("If they accept the request, you have to log out and back in for the changes to take effect.");
@@ -285,7 +285,7 @@ public:
                 SendMailTo(player, "Celestial Steed", "A strange steed was found roaming Northrend, phasing in and out of existence. I figured you would be interested in such a companion.", 54811, 1);
 
 
-            QueryResult result = LoginDatabase.Query("INSERT INTO `recruit_a_friend_rewarded` (`account_id`, `realm_id`, `character_guid`) VALUES ({}, {}, {})", player->GetSession()->GetAccountId(), rafRealmId, player->GetGUID().GetCounter());
+            LoginDatabase.Execute("INSERT INTO `recruit_a_friend_rewarded` (`account_id`, `realm_id`, `character_guid`) VALUES ({}, {}, {})", player->GetSession()->GetAccountId(), rafRealmId, player->GetGUID().GetCounter());
         }
     }
 
@@ -355,7 +355,7 @@ public:
 
     void OnStartup() override
     {
-        QueryResult result = LoginDatabase.Query("DELETE FROM `recruit_a_friend_accounts` WHERE `status` = {}", STATUS_REFERRAL_PENDING);
+        LoginDatabase.Execute("DELETE FROM `recruit_a_friend_accounts` WHERE `status` = {}", STATUS_REFERRAL_PENDING);
     }
 
     void OnUpdate(uint32 diff) override
@@ -366,8 +366,8 @@ public:
 
             if (currentTime > timeDelay)
             {
-                QueryResult result = LoginDatabase.Query("UPDATE `account` SET `recruiter` = 0 WHERE `id` IN (SELECT `account_id` FROM `recruit_a_friend_accounts` WHERE `referral_date` < NOW() - INTERVAL {} DAY AND status = {})", rafDuration, STATUS_REFERRAL_ACTIVE);
-                result = LoginDatabase.Query("UPDATE `recruit_a_friend_accounts` SET `status` = {} WHERE `referral_date` < NOW() - INTERVAL {} DAY AND `status` = {}", STATUS_REFERRAL_EXPIRED, rafDuration, STATUS_REFERRAL_ACTIVE);
+                LoginDatabase.Execute("UPDATE `account` SET `recruiter` = 0 WHERE `id` IN (SELECT `account_id` FROM `recruit_a_friend_accounts` WHERE `referral_date` < NOW() - INTERVAL {} DAY AND status = {})", rafDuration, STATUS_REFERRAL_ACTIVE);
+                LoginDatabase.Execute("UPDATE `recruit_a_friend_accounts` SET `status` = {} WHERE `referral_date` < NOW() - INTERVAL {} DAY AND `status` = {}", STATUS_REFERRAL_EXPIRED, rafDuration, STATUS_REFERRAL_ACTIVE);
 
                 currentTime = 0s;
             }
