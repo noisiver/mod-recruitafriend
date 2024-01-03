@@ -1,6 +1,3 @@
-# Buy Me A Coffee
-Want to show me some appreciation? Why not [buy me a coffee](https://www.buymeacoffee.com/noisiver)?
-
 # Features
 This module adds five new in-game commands that allows players to recruit each other.
 
