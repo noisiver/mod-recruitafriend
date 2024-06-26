@@ -1,5 +1,3 @@
-[![core-build](https://github.com/noisiver/mod-recruitafriend/actions/workflows/core-build.yml/badge.svg)](https://github.com/noisiver/mod-recruitafriend/actions/workflows/core-build.yml)
-
 # Features
 This module adds five new in-game commands that allows players to recruit each other.
 
